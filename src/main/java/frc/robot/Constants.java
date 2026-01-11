@@ -1,6 +1,7 @@
 package frc.robot;
 
 import com.ctre.phoenix6.signals.NeutralModeValue;
+import com.ctre.phoenix6.signals.SensorDirectionValue;
 
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.Vector;
@@ -150,6 +151,72 @@ public final class Constants {
     public static final double angleKTolerance = .5;
   
     public static final NeutralModeValue angleNeutralMode = NeutralModeValue.Brake;
+  }
+
+  public static final class ShooterConstants {
+    /* ID's */
+    public static final int shooterMotorID = 0;
+    public static final int indexerMotorID = 0;
+    public static final int turretMotorID = 0;  
+    public static final int aimingEncoderID = 0;
+
+    /* NeutralModes */
+    public static final NeutralModeValue shootingMotorNeutralMode = NeutralModeValue.Coast;
+    public static final NeutralModeValue indexingNeutralModeValue = NeutralModeValue.Brake;
+    public static final NeutralModeValue turretNeutralModeValue = NeutralModeValue.Brake;
+    
+    /* Speed and Control */
+    public static final double indexingSpeed = .5;
+    public static final double timeBetweenShots = .5;
+
+    public static final double shootingKP = 0.1; //.01
+    public static final double shootingKI = 0.0;
+    public static final double shootingKD = 0.0;
+    public static final double shootingKTolerance = .5; 
+
+    public static final double shooterMaxVoltage = 16;
+    public static final double shooterMaxDutyCycle = 1;
+
+    public static final double aimingKP = 0.1; //.01
+    public static final double aimingKI = 0.0;
+    public static final double aimingKD = 0.0;
+    public static final double aimingKTolerance = .5;
+    public static final Constraints aimingControllerConstraints = new Constraints(Math.PI * 4, Math.PI * 8);
+
+    public static final double turretMaxVoltage = 16;
+    public static final double turretMaxDutyCycle = 1;
+
+    /* Aiming */
+    public static final SensorDirectionValue aimingEncoderSensorDirection = SensorDirectionValue.CounterClockwise_Positive;
+    public static final double aimingEncoderRange = .5; //[-.5, .5)
+
+    public static final double turretGearRatioFromEncoder = 1;
+    public static final double aimingConversionFactor = 360 / turretGearRatioFromEncoder;
+  }
+
+  public static final class CollectorConstants {
+    /* ID's */
+    public static final int collectorMotorID = 0;
+    public static final int deployMotorID = 0;
+
+    /* NeutralModes */
+    public static final NeutralModeValue collectorMotorNeutralMode = NeutralModeValue.Coast;
+    public static final NeutralModeValue deployMotorNeutralMode = NeutralModeValue.Brake;
+
+    /* Speed and Control */
+    public static final double collectionSpeed = .5;
+
+    public static final double deployMotorMaxDutyCycle = 1;
+    public static final double deployMotorMaxVoltage = 12;
+
+    public static final double deployKP = 0;
+    public static final double deployKI = 0;
+    public static final double deployKD = 0;
+  }
+
+  public static final class ClimberConstants {
+    public static final int stage1MotorID = 0;
+    public static final int stage2MotorID = 0;
   }
 
   public static final class FieldConstants {
