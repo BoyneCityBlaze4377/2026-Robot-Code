@@ -111,7 +111,8 @@ public class SwerveModule {
     SwerveModuleState state = desiredState;
     state.optimize(getAngle());
 
-    m_driveMotor.setControl(new VelocityDutyCycle(state.speedMetersPerSecond));
+    //m_driveMotor.setControl(new VelocityDutyCycle(state.speedMetersPerSecond));
+    m_driveMotor.set(state.speedMetersPerSecond / ModuleConstants.maxModuleSpeedMetersPerSecond);
     setAngle(state);
 
     desiredStateSender.setString(desiredState.toString());
@@ -130,7 +131,7 @@ public class SwerveModule {
        ? getAngle() : desiredState.angle;
 
     turningController.setGoal(angle.getDegrees());
-    m_turningMotor.set(turningController.atGoal() ? 0 : turningController.calculate(getAbsoluteEncoder()));
+    m_turningMotor.set(turningController.atGoal() ? 0 : -turningController.calculate(getAbsoluteEncoder()));
     }
 
   /** 
@@ -185,7 +186,7 @@ public class SwerveModule {
     m_driveConfig.Audio.BeepOnBoot = false;
 
     m_driveConfig.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;
-    m_driveConfig.Feedback.SensorToMechanismRatio = ModuleConstants.driveMotorConversionFactor; //ModuleConstants.driveGearRatio
+    m_driveConfig.Feedback.SensorToMechanismRatio = 1 / ModuleConstants.driveMotorConversionFactor; //ModuleConstants.driveGearRatio
 
     m_driveConfig.ClosedLoopGeneral.ContinuousWrap = false;
 

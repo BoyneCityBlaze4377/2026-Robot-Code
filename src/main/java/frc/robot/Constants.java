@@ -44,8 +44,8 @@ public final class Constants {
 
     //Driving Axes
     public static final int xAxis = 1;
-    public static final int yAxis = 2;
-    public static final int omegaAxis = 4;
+    public static final int yAxis = 0;
+    public static final int omegaAxis = 2;
   }
 
   /* Physical constants of the DriveTrain */
@@ -72,7 +72,7 @@ public final class Constants {
     public static final double maxRotationSpeedRadiansPerSecond = Math.PI;
     public static final double maxRotationAccelerationRadiansPerSecondSquared = 2 * maxRotationSpeedRadiansPerSecond;
 
-    public static final double translationalDeadband = .1;
+    public static final double translationalDeadband = .15;
     public static final double rotationalDeadband = .4;
 
     public static final double jerkCrashTheshold = maxAccelerationMetersPerSecondSquared * Math.sqrt(2);
@@ -116,10 +116,10 @@ public final class Constants {
     public static final boolean backRightAbsReversed = false;
 
     /** Offsets */
-    public static final double frontLeftAbsoluteEncoderOffset = 0;  
-    public static final double frontRightAbsoluteEncoderOffset = 0;
-    public static final double backLeftAbsoluteEncoderOffset = 0;
-    public static final double backRightAbsoluteEncoderOffset = 0;
+    public static final double frontLeftAbsoluteEncoderOffset = -168.22;  
+    public static final double frontRightAbsoluteEncoderOffset = 44.29;
+    public static final double backLeftAbsoluteEncoderOffset = -136.66;
+    public static final double backRightAbsoluteEncoderOffset = 13.09;
 
     /** Full Module */
     public static final double maxModuleSpeedMetersPerSecond = 5; //5.614416 True max
@@ -150,7 +150,7 @@ public final class Constants {
     public static final double angleConversionFactor = angleGearRatio / 360;
   
     public static final Constraints angleControllerConstraints = new Constraints(Math.PI * 2, Math.PI);
-    public static final double angleKP = 0.0038; //.01
+    public static final double angleKP = 0.00038; //.01
     public static final double angleKI = 0.0;
     public static final double angleKD = 0.00004;
     public static final double angleKTolerance = .5;
