@@ -25,9 +25,9 @@ public class RobotContainer {
   public RobotContainer() {
     //Configure the trigger bindings
     configureBindings();
-    m_driveTrain.setDefaultCommand(m_driveTrain.TeleopDrive(() -> m_driverStick.getRawAxis(IOConstants.xAxis), 
-                                                            () -> m_driverStick.getRawAxis(IOConstants.yAxis),
-                                                            () -> m_driverStick.getRawAxis(IOConstants.omegaAxis)));
+    // m_driveTrain.setDefaultCommand(m_driveTrain.TeleopDrive(() -> m_driverStick.getRawAxis(IOConstants.xAxis), 
+    //                                                         () -> m_driverStick.getRawAxis(IOConstants.yAxis),
+    //                                                         () -> m_driverStick.getRawAxis(IOConstants.omegaAxis)));
   }
 
   /**
@@ -40,7 +40,7 @@ public class RobotContainer {
    * joysticks}.
    */
   private void configureBindings() {
-    new JoystickButton(m_driverStick, IOConstants.quickBrakeButtonID).toggleOnTrue(m_driveTrain.QuickBrake());
+    // new JoystickButton(m_driverStick, IOConstants.quickBrakeButtonID).toggleOnTrue(m_driveTrain.QuickBrake());
   }
 
   /**

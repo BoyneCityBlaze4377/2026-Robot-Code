@@ -138,7 +138,7 @@ public final class Constants {
     public static final double driveGearRatio = 5.68;
     public static final double driveMotorConversionFactor = (wheelDiameterMeters * Math.PI) / driveGearRatio;
 
-    public static final double driveKP = 0.0; //.01
+    public static final double driveKP = 0.4; //.01
     public static final double driveKI = 0.0;
     public static final double driveKD = 0.0;
     public static final double driveKTolerance = .5;
@@ -150,9 +150,9 @@ public final class Constants {
     public static final double angleConversionFactor = angleGearRatio / 360;
   
     public static final Constraints angleControllerConstraints = new Constraints(Math.PI * 2, Math.PI);
-    public static final double angleKP = 0.1; //.01
+    public static final double angleKP = 0.0038; //.01
     public static final double angleKI = 0.0;
-    public static final double angleKD = 0.0;
+    public static final double angleKD = 0.00004;
     public static final double angleKTolerance = .5;
   
     public static final NeutralModeValue angleNeutralMode = NeutralModeValue.Brake;

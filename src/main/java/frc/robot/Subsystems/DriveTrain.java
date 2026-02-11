@@ -341,8 +341,8 @@ public class DriveTrain extends SubsystemBase {
     omega = rot * DriveConstants.maxRotationSpeedRadiansPerSecond * speedScaler;
 
     x = MathUtil.applyDeadband(x, DriveConstants.translationalDeadband);
-    x = MathUtil.applyDeadband(y, DriveConstants.translationalDeadband);
-    x = MathUtil.applyDeadband(rot, DriveConstants.rotationalDeadband);
+    y = MathUtil.applyDeadband(y, DriveConstants.translationalDeadband);
+    omega = MathUtil.applyDeadband(rot, DriveConstants.rotationalDeadband);
   }
 
   /**
@@ -704,7 +704,8 @@ public class DriveTrain extends SubsystemBase {
   /** COMMANDS */
   public Command TeleopDrive(DoubleSupplier xSupplier, DoubleSupplier ySupplier, DoubleSupplier omegaSupplier) {
     return Commands.runEnd(() -> this.teleopDrive(xSupplier.getAsDouble(), ySupplier.getAsDouble(), omegaSupplier.getAsDouble()),
-                           () -> this.stop(), this);
+                           () -> this.stop(),
+                           this);
   }
 
   public Command QuickBrake() {
