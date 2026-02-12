@@ -40,7 +40,7 @@ public class SwerveModule {
   private final SlewRateLimiter DriveAccelLimiter;
   private final ProfiledPIDController turningController;
 
-  private SwerveModuleState m_desiredState;
+  private SwerveModuleState m_desiredState = new SwerveModuleState();
 
   private final GenericEntry desiredStateSender, wheelAngle, currentStateSender;
 
@@ -115,7 +115,7 @@ public class SwerveModule {
     m_driveMotor.set(state.speedMetersPerSecond / ModuleConstants.maxModuleSpeedMetersPerSecond);
     setAngle(state);
 
-    desiredStateSender.setString(desiredState.toString());
+    desiredStateSender.setString(state.toString());
   }
 
   /**
@@ -130,8 +130,9 @@ public class SwerveModule {
       (Math.abs(desiredState.speedMetersPerSecond) <= (DriveConstants.maxSpeedMetersPerSecond * .01)) 
        ? getAngle() : desiredState.angle;
 
-    turningController.setGoal(angle.getDegrees());
-    m_turningMotor.set(turningController.atGoal() ? 0 : -turningController.calculate(getAbsoluteEncoder()));
+    turningController.setGoal(desiredState.angle.getDegrees());
+    m_turningMotor.set(//turningController.atGoal() ? 0 : 
+    -turningController.calculate(getAbsoluteEncoder()));
     }
 
   /** 
@@ -158,7 +159,8 @@ public class SwerveModule {
 
   /** Sets the default configuration of the angle motor. */
   private void configAngleMotorDefault() {
-    m_driveConfig.Audio.BeepOnBoot = false;
+    m_turnConfig.Audio.BeepOnBoot = false;
+    m_turnConfig.Audio.BeepOnConfig = false;
 
     m_turnConfig.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;
     // m_turnConfig.Feedback.SensorToMechanismRatio = 1;
@@ -184,6 +186,7 @@ public class SwerveModule {
   /** Sets the default configuration of the drive motor. */
   private void configDriveMotorDefault() {
     m_driveConfig.Audio.BeepOnBoot = false;
+    m_driveConfig.Audio.BeepOnConfig = false;
 
     m_driveConfig.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;
     m_driveConfig.Feedback.SensorToMechanismRatio = 1 / ModuleConstants.driveMotorConversionFactor; //ModuleConstants.driveGearRatio

@@ -2,6 +2,7 @@ package frc.robot.Subsystems;
 
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.BooleanSupplier;
 import java.util.function.DoubleSupplier;
 
 import com.studica.frc.AHRS;
@@ -68,8 +69,6 @@ public class DriveTrain extends SubsystemBase {
   private final PIDController headingController = new PIDController(AutoAimConstants.turnkP,
                                                                     AutoAimConstants.turnkI,
                                                                     AutoAimConstants.turnkD);
-  private final SlewRateLimiter transAccelLimiter = new SlewRateLimiter(DriveConstants.maxAccelerationMetersPerSecondSquared);
-  private final SlewRateLimiter rotAccelLimiter = new SlewRateLimiter(DriveConstants.maxRotationAccelerationRadiansPerSecondSquared);
 
   private TimedValue lastAccel;
 
@@ -85,6 +84,8 @@ public class DriveTrain extends SubsystemBase {
 
   private double tx, ty, ta, tID, speedScaler, heading, x, y, omega;
   private int periodicTimer = 1;
+
+  public boolean PARAM;
     
   /** Creates a new DriveTrain. */
   public DriveTrain() {
@@ -192,6 +193,28 @@ public class DriveTrain extends SubsystemBase {
       }
     });
 
+    //SwerveDrive DesiredState Widget
+    SmartDashboard.putData("Desired Swerve Drive", new Sendable() {
+      @Override
+      public void initSendable(SendableBuilder builder) {
+        builder.setSmartDashboardType("SwerveDrive");
+
+        builder.addDoubleProperty("Front Left Angle", () -> m_frontLeft.getDesiredState().angle.getRadians(), null);
+        builder.addDoubleProperty("Front Left Velocity", () -> m_frontLeft.getDesiredState().speedMetersPerSecond, null);
+
+        builder.addDoubleProperty("Front Right Angle", () -> m_frontRight.getDesiredState().angle.getRadians(), null);
+        builder.addDoubleProperty("Front Right Velocity", () -> m_frontRight.getDesiredState().speedMetersPerSecond, null);
+
+        builder.addDoubleProperty("Back Left Angle", () -> m_backLeft.getDesiredState().angle.getRadians(), null);
+        builder.addDoubleProperty("Back Left Velocity", () -> m_backLeft.getDesiredState().speedMetersPerSecond, null);
+
+        builder.addDoubleProperty("Back Right Angle", () -> m_backRight.getDesiredState().angle.getRadians(), null);
+        builder.addDoubleProperty("Back Right Velocity", () -> m_backRight.getDesiredState().speedMetersPerSecond, null);
+
+        builder.addDoubleProperty("Robot Angle", () -> m_gyro.getRotation2d().getRadians(), null);
+      }
+    });
+
     /* PID Controllers */
     xController.setTolerance(AutoAimConstants.transkTolerance);
     yController.setTolerance(AutoAimConstants.transkTolerance);
@@ -220,6 +243,8 @@ public class DriveTrain extends SubsystemBase {
     lastAccel = new TimedValue(0, 0);
 
     headingController.enableContinuousInput(-Math.PI, Math.PI);
+
+    PARAM = true;
   }
 
   @Override
@@ -279,6 +304,7 @@ public class DriveTrain extends SubsystemBase {
 
     // Drive Robot
     rawDrive(x , y, omega);
+    //m_frontRight.setDesiredState(new SwerveModuleState(0, Rotation2d.fromDegrees(90)));
 
     //Crash detection
     if (crashDetectDebouncer.calculate(Math.abs(getJerk()) > DriveConstants.jerkCrashTheshold)) {
@@ -307,23 +333,25 @@ public class DriveTrain extends SubsystemBase {
    * @param xSpeed Speed on the x-axis in Meters per Second
    * @param ySpeed Speed on the y-axis in Meters per Second
    * @param omega Rotational speed in Radians per Second
-   * @param fieldRelative Whether to drive field oriented or not
-   * @param scale Whether to use Elevator Height Scalers
    */
   private void rawDrive(double xSpeed, double ySpeed, double omega) {
-    xSpeed = transAccelLimiter.calculate(xSpeed);
-    ySpeed = transAccelLimiter.calculate(ySpeed);
-    omega = rotAccelLimiter.calculate(omega);
-
-    SwerveModuleState[] swerveModuleStates = SwerveConstants.driveKinematics.toSwerveModuleStates(fieldOrientation
-                           ? ChassisSpeeds.fromFieldRelativeSpeeds(xSpeed, ySpeed, omega, m_gyro.getRotation2d()) 
-                           : new ChassisSpeeds(xSpeed, ySpeed, omega));
-
-    setModuleStates(swerveModuleStates);
+    SmartDashboard.putString("ChassisSpeed Inputs", "X: " + xSpeed + " |Y: " + ySpeed + " |rot: " + omega);
 
     xSpeedSender.setDouble(xSpeed);
     ySpeedSender.setDouble(ySpeed);
-    omegaSender.setDouble(-omega);
+    omegaSender.setDouble(omega);
+
+    ChassisSpeeds desiredSpeeds = fieldOrientation
+                           ? ChassisSpeeds.fromFieldRelativeSpeeds(xSpeed, ySpeed, omega, m_gyro.getRotation2d()) 
+                           : new ChassisSpeeds(xSpeed, ySpeed, omega);
+    SwerveModuleState[] swerveModuleStates = SwerveConstants.driveKinematics.toSwerveModuleStates(desiredSpeeds);
+
+    SmartDashboard.putString("ChassisSpeed Outputs", "X: " + desiredSpeeds.vxMetersPerSecond + 
+                                                         " |Y: " + desiredSpeeds.vyMetersPerSecond + 
+                                                         " |rot: " + desiredSpeeds.omegaRadiansPerSecond);
+
+
+    setModuleStates(swerveModuleStates);
   }
 
   /**
@@ -334,15 +362,16 @@ public class DriveTrain extends SubsystemBase {
    * @param rot Angular rate of the robot.
    */
   public void teleopDrive(double xSpeed, double ySpeed, double rot) {
+    SmartDashboard.putString("Joystick Inputs", "X: " + xSpeed + " |Y: " + ySpeed + " |rot: " + rot);
     rot = Math.pow(rot, 3);
-
-    x = xSpeed * DriveConstants.maxSpeedMetersPerSecond * speedScaler * (fieldOrientation ? (isBlue ? 1 : -1) : 1);
-    y = ySpeed * DriveConstants.maxSpeedMetersPerSecond * speedScaler * (fieldOrientation ? (isBlue ? 1 : -1) : 1);
-    omega = rot * DriveConstants.maxRotationSpeedRadiansPerSecond * speedScaler;
 
     x = MathUtil.applyDeadband(x, DriveConstants.translationalDeadband);
     y = MathUtil.applyDeadband(y, DriveConstants.translationalDeadband);
     omega = MathUtil.applyDeadband(rot, DriveConstants.rotationalDeadband);
+
+    x = xSpeed * DriveConstants.maxSpeedMetersPerSecond * speedScaler;
+    y = ySpeed * DriveConstants.maxSpeedMetersPerSecond * speedScaler;
+    omega = rot * DriveConstants.maxRotationSpeedRadiansPerSecond * speedScaler;
   }
 
   /**
@@ -357,18 +386,6 @@ public class DriveTrain extends SubsystemBase {
     x = xSpeed;
     y = ySpeed;
     omega = rot;
-  }
-
-  /**
-   * Drive based on a ChassisSpeeds object
-   * 
-   * @param speeds The desired ChassisSpeeds of the {@link DriveTrain}
-   */
-  public void chassisSpeedDrive(ChassisSpeeds speeds) {
-    brakeAll();
-    x = speeds.vxMetersPerSecond;
-    y = speeds.vyMetersPerSecond;
-    omega = speeds.omegaRadiansPerSecond;
   }
 
   /**
@@ -388,6 +405,32 @@ public class DriveTrain extends SubsystemBase {
       // Apply the generated speeds
       chassisSpeedDrive(speeds);
       setOrientation(true);
+  }
+
+  /**
+   * Drive based on a ChassisSpeeds object
+   * 
+   * @param speeds The desired ChassisSpeeds of the {@link DriveTrain}
+   */
+  public void chassisSpeedDrive(ChassisSpeeds speeds) {
+    brakeAll();
+    x = speeds.vxMetersPerSecond;
+    y = speeds.vyMetersPerSecond;
+    omega = speeds.omegaRadiansPerSecond;
+  }
+
+  /**
+   * Sets the swerve ModuleStates.
+   *
+   * @param desiredStates The desired SwerveModule states.
+   */
+  public void setModuleStates(SwerveModuleState[] desiredStates) {
+    SwerveDriveKinematics.desaturateWheelSpeeds(desiredStates, ModuleConstants.maxModuleSpeedMetersPerSecond);
+
+    m_frontLeft.setDesiredState(desiredStates[0]);
+    m_frontRight.setDesiredState(desiredStates[1]);
+    m_backLeft.setDesiredState(desiredStates[2]);
+    m_backRight.setDesiredState(desiredStates[3]);
   }
 
   /**
@@ -425,20 +468,6 @@ public class DriveTrain extends SubsystemBase {
   /** @return Whether or not the robot is at its desired position based on PIDController setpoints and tolerances */
   public boolean atSetpoints() {
     return xController.atSetpoint() && yController.atSetpoint() && headingController.atSetpoint();
-  }
-
-  /**
-   * Sets the swerve ModuleStates.
-   *
-   * @param desiredStates The desired SwerveModule states.
-   */
-  public void setModuleStates(SwerveModuleState[] desiredStates) {
-    SwerveDriveKinematics.desaturateWheelSpeeds(desiredStates, ModuleConstants.maxModuleSpeedMetersPerSecond);
-
-    m_frontLeft.setDesiredState(desiredStates[0]);
-    m_frontRight.setDesiredState(desiredStates[1]);
-    m_backLeft.setDesiredState(desiredStates[2]);
-    m_backRight.setDesiredState(desiredStates[3]);
   }
 
   /** @return An array of the modules' positions */
@@ -709,6 +738,16 @@ public class DriveTrain extends SubsystemBase {
   }
 
   public Command QuickBrake() {
-    return Commands.run(() -> stop(), this);
+    return Commands.startRun(() -> this.brakeAll(), 
+                             () -> this.teleopDrive(0, 0, 0), 
+                             this);
+  }
+
+  public void setParam(boolean param) {
+    PARAM = param;
+  }
+
+  public Command OutputTEST(BooleanSupplier param) {
+    return Commands.run(() -> SmartDashboard.putBoolean("PARAM", param.getAsBoolean()));
   }
 }

@@ -36,7 +36,7 @@ public final class Constants {
     /* BUTTON IDS */
     /* Driver */
     //Main Functions
-    public static final int quickBrakeButtonID = 6; //6
+    public static final int quickBrakeButtonID = 1; //6
     public static final int slowModeButtonID = 3; //3
     public static final int switchOrientationButtonID = 4; //4
     public static final int lockPoseButtonID = 5; //5
@@ -69,7 +69,7 @@ public final class Constants {
 
     public static final double maxSpeedMetersPerSecond = 5;
     public static final double maxAccelerationMetersPerSecondSquared = 4;
-    public static final double maxRotationSpeedRadiansPerSecond = Math.PI;
+    public static final double maxRotationSpeedRadiansPerSecond = 3 * Math.PI;
     public static final double maxRotationAccelerationRadiansPerSecondSquared = 2 * maxRotationSpeedRadiansPerSecond;
 
     public static final double translationalDeadband = .15;
@@ -149,10 +149,11 @@ public final class Constants {
     public static final double angleGearRatio = 12.1;
     public static final double angleConversionFactor = angleGearRatio / 360;
   
-    public static final Constraints angleControllerConstraints = new Constraints(Math.PI * 2, Math.PI);
-    public static final double angleKP = 0.00038; //.01
-    public static final double angleKI = 0.0;
-    public static final double angleKD = 0.00004;
+    public static final Constraints angleControllerConstraints = new Constraints(maxModuleAngularSpeedDegreesPerSecond, 
+                                                                                 maxModuleAngularAccelerationDegreesPerSecondSquared);
+    public static final double angleKP = 0.005; //.005
+    public static final double angleKI = 0.00002; //.00002
+    public static final double angleKD = 0.00009; //.00009
     public static final double angleKTolerance = .5;
   
     public static final NeutralModeValue angleNeutralMode = NeutralModeValue.Brake;

@@ -22,6 +22,8 @@ public class Shooter extends SubsystemBase {
 
   private final ProfiledPIDController m_aimingController, m_hoodController;
 
+  private boolean INTEROP_TESTING;
+
   /** Creates a new Shooter. */
   public Shooter() {
     m_shooter = new TalonFX(ShooterConstants.shooterMotorID);
@@ -49,11 +51,17 @@ public class Shooter extends SubsystemBase {
                                                  ShooterConstants.aimingControllerConstraints);
 
     m_shooter.setPosition(0);
+
+    INTEROP_TESTING = true;
   }
 
   @Override
   public void periodic() {
     // This method will be called once per scheduler run
+  }
+
+  public boolean getTestParam() {
+    return INTEROP_TESTING;
   }
 
   public void configMotorDefaults() {
@@ -130,5 +138,9 @@ public class Shooter extends SubsystemBase {
     m_turret.set(m_aimingController.calculate(m_aimingEncoder.getAbsolutePosition().getValueAsDouble() 
                                                   * ShooterConstants.aimingConversionFactor, 
                                               desiredAngle.getDegrees()));
+  }
+
+  public boolean PARAM() {
+    return INTEROP_TESTING;
   }
 }
