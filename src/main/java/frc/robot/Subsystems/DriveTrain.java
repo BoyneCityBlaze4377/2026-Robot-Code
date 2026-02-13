@@ -15,7 +15,6 @@ import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.filter.Debouncer;
-import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
@@ -42,9 +41,10 @@ import frc.Lib.ElasticUtil.Notification.NotificationLevel;
 import frc.Lib.LimelightHelpers;
 import frc.Lib.LimelightHelpers.PoseEstimate;
 import frc.Lib.TimedValue;
-
+import frc.Lib.Vector3D;
 import frc.robot.Constants.AutoAimConstants;
 import frc.robot.Constants.DriveConstants;
+import frc.robot.Constants.FieldConstants;
 import frc.robot.Constants.IOConstants;
 import frc.robot.Constants.ModuleConstants;
 import frc.robot.Constants.SensorConstants;
@@ -52,6 +52,8 @@ import frc.robot.Constants.SwerveConstants;
 import frc.robot.Robot;
 
 public class DriveTrain extends SubsystemBase {
+  public enum DriveTrainZoneState {AllianceZone, NeutralZone}
+
   private final SwerveModule m_frontLeft, m_frontRight, m_backLeft, m_backRight;
   private final AHRS m_gyro;
 
@@ -77,15 +79,16 @@ public class DriveTrain extends SubsystemBase {
   private final String cameraName;
   private Alliance m_alliance;
 
+  private DriveTrainZoneState currentZone = DriveTrainZoneState.AllianceZone;
+
   private AdvancedPose2D initialPose = new AdvancedPose2D(), lastPose;
+  private ChassisSpeeds currentSpeeds = new ChassisSpeeds();
 
   private boolean fieldOrientation = true, isBrake = true, autonInRange = false, isBlue = true, notified = false, 
                   crash = false, hasCrashed = false;
 
   private double tx, ty, ta, tID, speedScaler, heading, x, y, omega;
   private int periodicTimer = 1;
-
-  public boolean PARAM;
     
   /** Creates a new DriveTrain. */
   public DriveTrain() {
@@ -243,8 +246,6 @@ public class DriveTrain extends SubsystemBase {
     lastAccel = new TimedValue(0, 0);
 
     headingController.enableContinuousInput(-Math.PI, Math.PI);
-
-    PARAM = true;
   }
 
   @Override
@@ -305,6 +306,12 @@ public class DriveTrain extends SubsystemBase {
     // Drive Robot
     rawDrive(x , y, omega);
     //m_frontRight.setDesiredState(new SwerveModuleState(0, Rotation2d.fromDegrees(90)));
+
+    //Update velocity
+    currentSpeeds = SwerveConstants.driveKinematics.toChassisSpeeds(getSwerveModuleStates());
+    currentZone = (FieldConstants.allianceZone.pointInZone(new AdvancedPose2D(getPose())) ? 
+                   DriveTrainZoneState.AllianceZone : 
+                   DriveTrainZoneState.NeutralZone);
 
     //Crash detection
     if (crashDetectDebouncer.calculate(Math.abs(getJerk()) > DriveConstants.jerkCrashTheshold)) {
@@ -476,6 +483,11 @@ public class DriveTrain extends SubsystemBase {
                                        m_backLeft.getPosition(), m_backRight.getPosition()};
   }
 
+  public SwerveModuleState[] getSwerveModuleStates() {
+    return new SwerveModuleState[] {m_frontLeft.getState(), m_frontRight.getState(),
+                                    m_backLeft.getState(), m_backRight.getState()};
+  }
+
   /** Sets the pose of the robot to be locked: all modules' angles form an X */
   public void lockPose() {
     m_frontLeft.setLockedState(new SwerveModuleState(0, Rotation2d.fromDegrees(225)));
@@ -486,8 +498,7 @@ public class DriveTrain extends SubsystemBase {
 
   /** @return The current ChassisSpeeds of the {@link DriveTrain} */
   public ChassisSpeeds getChassisSpeeds() {
-    return fieldOrientation ? ChassisSpeeds.fromFieldRelativeSpeeds(x, y, omega, m_gyro.getRotation2d()) 
-                            : new ChassisSpeeds(-x, -y, omega);
+    return currentSpeeds;
   }
 
   /**
@@ -516,6 +527,14 @@ public class DriveTrain extends SubsystemBase {
   /** @return The pose */
   public synchronized Pose2d getPose() {
     return poseEstimator.getEstimatedPosition();
+  }
+
+  public AdvancedPose2D getAdvancedPose() {
+    return new AdvancedPose2D(getPose());
+  }
+
+  public DriveTrainZoneState getCurrentZone() {
+    return currentZone;
   }
 
   public AdvancedPose2D getVelocityVector() {
@@ -620,6 +639,10 @@ public class DriveTrain extends SubsystemBase {
   /** @return The filtered robot heading as a {@link Rotation2d} */
   public synchronized Rotation2d getHeading() {
     return Rotation2d.fromDegrees(heading);
+  }
+
+  public Vector3D getAngularVelocityVector() {
+    return new Vector3D(0, 0, currentSpeeds.omegaRadiansPerSecond);
   }
 
   /** @return The unfiltered heading of the robot */
@@ -741,13 +764,5 @@ public class DriveTrain extends SubsystemBase {
     return Commands.startRun(() -> this.brakeAll(), 
                              () -> this.teleopDrive(0, 0, 0), 
                              this);
-  }
-
-  public void setParam(boolean param) {
-    PARAM = param;
-  }
-
-  public Command OutputTEST(BooleanSupplier param) {
-    return Commands.run(() -> SmartDashboard.putBoolean("PARAM", param.getAsBoolean()));
   }
 }

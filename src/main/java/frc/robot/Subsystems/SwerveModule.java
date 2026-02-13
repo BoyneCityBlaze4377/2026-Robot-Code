@@ -131,8 +131,7 @@ public class SwerveModule {
        ? getAngle() : desiredState.angle;
 
     turningController.setGoal(desiredState.angle.getDegrees());
-    m_turningMotor.set(//turningController.atGoal() ? 0 : 
-    -turningController.calculate(getAbsoluteEncoder()));
+    m_turningMotor.set(turningController.atGoal() ? 0 : -turningController.calculate(getAbsoluteEncoder()));
     }
 
   /** 

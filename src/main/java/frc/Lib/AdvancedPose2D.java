@@ -2,6 +2,7 @@ package frc.Lib;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 
@@ -96,6 +97,10 @@ public class AdvancedPose2D extends Pose2d {
         return this.average(other, false);
     }
 
+    public static AdvancedPose2D getMidpoint(AdvancedPose2D a, AdvancedPose2D b) {
+        return a.average(b, false);
+    }
+
     public double getDistance(AdvancedPose2D other) {
         return this.getTranslation().getDistance(other.getTranslation());
     }
@@ -122,8 +127,43 @@ public class AdvancedPose2D extends Pose2d {
         return Rotation2d.fromRadians(angle);
     }
 
+    public Rotation2d getAngleTowards(Pose3d other) {
+        return getAngleTowards(new AdvancedPose2D(other.getX(), other.getY()));
+    }
+
     public AdvancedPose2D getDerivativeWith(AdvancedPose2D lastPose) {
         return new AdvancedPose2D(this.getX() - lastPose.getX(), this.getY() - lastPose.getY(), 
                                   this.getHeadingDegrees() - lastPose.getHeadingDegrees());
     }
+
+    public AdvancedPose2D getClosest(AdvancedPose2D option1, AdvancedPose2D option2) {
+        return this.getDistance(option1) > this.getDistance(option2) ? option2 : option1;
+    }
+
+    public AdvancedPose2D getClosest(AdvancedPose2D... options) {
+        double distance = Float.POSITIVE_INFINITY;
+        AdvancedPose2D closest = options[0];
+
+        for (int i = 0; i < options.length; i++) {
+            if (this.getDistance(options[i]) < distance) {
+                distance = this.getDistance(options[i]);
+                closest = options[i];
+            }
+        }
+
+        return closest;
+    }
+
+    public Vector3D getVectorTowards(AdvancedPose2D other) {
+        return new Vector3D(other.getX() - getX(), other.getY() - getY());
+    }
+
+    public Vector3D get2DVectorTowards(Pose3d other) {
+        return getVectorTowards(new AdvancedPose2D(other.getX(), other.getY()));
+    }
+
+    // public Vector3D get3DVectorTowards(Pose3d other) {
+    //     return new Vector3D(other.getX() - this.getX(), other.getY() - this.getY(), other.getZ() - this.getZ());
+    //     Pose3d k;
+    // }
 }

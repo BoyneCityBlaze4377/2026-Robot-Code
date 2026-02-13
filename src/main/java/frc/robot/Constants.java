@@ -6,6 +6,8 @@ import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.Vector;
+import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.numbers.N3;
@@ -13,6 +15,9 @@ import edu.wpi.first.math.trajectory.TrapezoidProfile.Constraints;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
+import frc.Lib.AdvancedPose2D;
+import frc.Lib.Vector3D;
+import frc.Lib.Zone;
 
 /**
  * The Constants class provides a convenient place for teams to hold robot-wide numerical or boolean
@@ -167,6 +172,8 @@ public final class Constants {
     public static final int hoodMotorID = 0;
 
     public static final int aimingEncoderID = 0;
+    public static final int hoodEncoderID = 0;
+    public static final int flywheelEncoderID = 0;
 
     /* NeutralModes */
     public static final NeutralModeValue shootingMotorNeutralMode = NeutralModeValue.Coast;
@@ -213,6 +220,9 @@ public final class Constants {
 
     public static final double turretGearRatioFromEncoder = 1;
     public static final double aimingConversionFactor = 360 / turretGearRatioFromEncoder;
+
+    public static final double hoodGearRatioFromEncoder = 1;
+    public static final double hoodConversionFactor = 360 / hoodGearRatioFromEncoder;
   }
 
   public static final class CollectorConstants {
@@ -257,8 +267,26 @@ public final class Constants {
   }
 
   public static final class FieldConstants {
-    public static final double fieldLength = 17.548;
-    public static final double fieldWidth = 8.052;
+    public static final double fieldLength = Units.inchesToMeters(651.22);
+    public static final double fieldWidth = Units.inchesToMeters(317.69);
+
+    public static final double autonLineDistance = Units.inchesToMeters(156.06);
+    public static final double hubOpeningHeight = Units.inchesToMeters(72);
+    public static final double netHeight = Units.inchesToMeters(120.36);
+    public static final double hubCenterX = Units.inchesToMeters(182.11);
+
+    public static final AdvancedPose2D hubCoordinates = new AdvancedPose2D(Units.inchesToMeters(182.11), fieldWidth / 2);
+    public static final Pose3d hubPosition = new Pose3d(hubCoordinates.getX(), 
+                                                        hubCoordinates.getY(), 
+                                                        hubOpeningHeight, 
+                                                        new Rotation3d());
+    public static final AdvancedPose2D leftShuttleTarget = new AdvancedPose2D(autonLineDistance / 2, fieldWidth * 3 / 4);
+    public static final AdvancedPose2D rightShuttleTarget = new AdvancedPose2D(autonLineDistance / 2, fieldWidth / 4);
+
+    public static final Zone allianceZone = new Zone(new AdvancedPose2D(), 
+                                                     new AdvancedPose2D(hubCenterX, fieldWidth));
+    public static final Zone neutralZone = new Zone(new AdvancedPose2D(hubCenterX, 0), 
+                                                    new AdvancedPose2D(fieldLength - hubCenterX, fieldWidth));
   }
 
   public class AutoAimConstants {
@@ -271,6 +299,11 @@ public final class Constants {
     public static final double turnkI = .355; //.355
     public static final double turnkD = 0; //0
     public static final double turnkTolerance = .03;
+
+    public static final AdvancedPose2D turretOffsetCoordinates = new AdvancedPose2D();
+    public static final Vector3D turretOffsetPos = new Vector3D();
+
+    public static final double maxShotHeight = FieldConstants.hubOpeningHeight + 1;
 
     public static final Vector<N3> poseEstimateOdometryStdDev = VecBuilder.fill(.05, .05, Units.degreesToRadians(.2));
     public static final Vector<N3> poseEstimateVisionStdDev = VecBuilder.fill(.1, .1, Units.degreesToRadians(3));

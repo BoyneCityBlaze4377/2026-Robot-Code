@@ -15,7 +15,10 @@ import frc.robot.Subsystems.*;
  */
 public class RobotContainer {
   private final DriveTrain m_driveTrain = new DriveTrain();
-  private final Shooter m_shooter = new Shooter();
+  private final Shooter m_shooter = new Shooter(m_driveTrain::getAdvancedPose,
+                                                m_driveTrain::getChassisSpeeds,
+                                                m_driveTrain::getAngularVelocityVector,
+                                                m_driveTrain::getCurrentZone);
   private final Collector m_collector = new Collector();
   private final Climber m_climber = new Climber();
 
@@ -41,7 +44,6 @@ public class RobotContainer {
    */
   private void configureBindings() {
     new JoystickButton(m_driverStick, IOConstants.quickBrakeButtonID).toggleOnTrue(m_driveTrain.QuickBrake());
-    new JoystickButton(m_driverStick, 7).onTrue(m_driveTrain.OutputTEST(m_shooter::PARAM));
   }
 
   /**
