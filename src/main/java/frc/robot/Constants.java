@@ -2,6 +2,7 @@ package frc.robot;
 
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.signals.SensorDirectionValue;
+import com.pathplanner.lib.config.RobotConfig;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 
 import edu.wpi.first.math.VecBuilder;
@@ -315,5 +316,8 @@ public final class Constants {
   public class SensorConstants {
     /** LIMELIGHT */
     public static final String limeLightName = "limelight";
+  }
+   public class PathPlaner {
+    public static RobotConfig config;
   }
 }

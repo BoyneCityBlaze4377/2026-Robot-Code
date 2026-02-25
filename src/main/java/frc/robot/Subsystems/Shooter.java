@@ -16,6 +16,8 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.Lib.AdvancedPose2D;
 import frc.Lib.Vector3D;
@@ -205,5 +207,10 @@ public class Shooter extends SubsystemBase {
     Vector3D vectorTowardsMax = new Vector3D(maximum.minus(currentPosition3D).getX(),
                                              maximum.minus(currentPosition3D).getY(),
                                              maximum.minus(currentPosition3D).getZ());
+  }
+
+  public Command runIndex() {
+    return Commands.runEnd(() -> this.index(), 
+                           () -> this.stopIndex());
   }
 }

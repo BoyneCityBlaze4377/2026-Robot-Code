@@ -2,15 +2,17 @@ package frc.robot.Subsystems;
 
 import java.util.Map;
 import java.util.Optional;
-import java.util.function.BooleanSupplier;
 import java.util.function.DoubleSupplier;
 
+import com.ctre.phoenix6.signals.NeutralModeValue;
+import com.pathplanner.lib.auto.AutoBuilder;
+import com.pathplanner.lib.config.PIDConstants;
+import com.pathplanner.lib.config.RobotConfig;
+import com.pathplanner.lib.controllers.PPHolonomicDriveController;
 import com.studica.frc.AHRS;
 import com.studica.frc.AHRS.NavXComType;
-import com.ctre.phoenix6.signals.NeutralModeValue;
 
 import choreo.trajectory.SwerveSample;
-
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
@@ -33,7 +35,6 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-
 import frc.Lib.AdvancedPose2D;
 import frc.Lib.ElasticUtil;
 import frc.Lib.ElasticUtil.Notification;
@@ -47,6 +48,7 @@ import frc.robot.Constants.DriveConstants;
 import frc.robot.Constants.FieldConstants;
 import frc.robot.Constants.IOConstants;
 import frc.robot.Constants.ModuleConstants;
+import frc.robot.Constants.PathPlaner;
 import frc.robot.Constants.SensorConstants;
 import frc.robot.Constants.SwerveConstants;
 import frc.robot.Robot;
@@ -246,6 +248,25 @@ public class DriveTrain extends SubsystemBase {
     lastAccel = new TimedValue(0, 0);
 
     headingController.enableContinuousInput(-Math.PI, Math.PI);
+
+    //PathPlaner
+    try{
+      PathPlaner.config = RobotConfig.fromGUISettings();
+    } catch (Exception e) {
+      // Handle exception as needed
+      e.printStackTrace();
+    }
+
+    AutoBuilder.configure(this :: getPose,
+                          this :: setInitialPose,
+                          this :: getChassisSpeeds, 
+                          this :: chassisSpeedDrive,
+                          new PPHolonomicDriveController(
+                            new PIDConstants(AutoAimConstants.transkP,AutoAimConstants.transkI,AutoAimConstants.transkD),
+                            new PIDConstants(AutoAimConstants.turnkP, AutoAimConstants.turnkI, AutoAimConstants.turnkD)), 
+                          PathPlaner.config,
+                          () -> false,
+                          this);
   }
 
   @Override
@@ -381,19 +402,19 @@ public class DriveTrain extends SubsystemBase {
     omega = rot * DriveConstants.maxRotationSpeedRadiansPerSecond * speedScaler;
   }
 
-  /**
-   * Drive the robot autonomously.
-   *
-   * @param xSpeed Speed of the robot in the x direction (forward).
-   * @param ySpeed Speed of the robot in the y direction (sideways).
-   * @param rot Angular rate of the robot.
-   */
-  public void autonDrive(double xSpeed, double ySpeed, double rot) {
-    brakeAll();
-    x = xSpeed;
-    y = ySpeed;
-    omega = rot;
-  }
+  // /**
+  //  * Drive the robot autonomously.
+  //  *
+  //  * @param xSpeed Speed of the robot in the x direction (forward).
+  //  * @param ySpeed Speed of the robot in the y direction (sideways).
+  //  * @param rot Angular rate of the robot.
+  //  */
+  // public void autonDrive(double xSpeed, double ySpeed, double rot) {
+  //   brakeAll();
+  //   x = xSpeed;
+  //   y = ySpeed;
+  //   omega = rot;
+  // }
 
   /**
    * Drive the robot accoring to a Choreo Trajectory
@@ -405,8 +426,7 @@ public class DriveTrain extends SubsystemBase {
       ChassisSpeeds speeds = new ChassisSpeeds(
           sample.vx + xController.calculate(getPose().getX(), sample.x),
           sample.vy + yController.calculate(getPose().getY(), sample.y),
-          sample.omega + headingController.calculate(getPose().getRotation().getRadians(), 
-          sample.heading)
+          sample.omega + headingController.calculate(getPose().getRotation().getRadians(), sample.heading)
       );
       
       // Apply the generated speeds
@@ -724,7 +744,7 @@ public class DriveTrain extends SubsystemBase {
    * 
    * @param pose The initial pose to be set
    */
-  public synchronized void setInitialPose(AdvancedPose2D pose) {
+  public synchronized void setInitialPose(Pose2d pose) {
     poseEstimator.resetPosition(getHeading(), getSwerveModulePositions(), pose);
   }
 
@@ -764,5 +784,19 @@ public class DriveTrain extends SubsystemBase {
     return Commands.startRun(() -> this.brakeAll(), 
                              () -> this.teleopDrive(0, 0, 0), 
                              this);
+  }
+
+  //choreo
+  public void followTrajectory(SwerveSample sample) {
+    Pose2d pose = getPose();
+
+    ChassisSpeeds speeds = new ChassisSpeeds( 
+      sample.vx + xController.calculate(pose.getX(), sample.x), 
+      sample.vy + yController.calculate(pose.getY(), sample.y),
+      sample.omega + headingController.calculate(pose.getRotation().getRadians(), sample.heading));
+
+    chassisSpeedDrive(speeds);
+
+    SmartDashboard.putString("ChassisSpeeds", speeds.toString());
   }
 }

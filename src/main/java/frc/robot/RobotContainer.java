@@ -1,5 +1,6 @@
 package frc.robot;
 
+import choreo.auto.AutoFactory;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.button.JoystickButton;
@@ -21,6 +22,12 @@ public class RobotContainer {
                                                 m_driveTrain::getCurrentZone);
   private final Collector m_collector = new Collector();
   private final Climber m_climber = new Climber();
+
+  private final AutoFactory m_autoFactory = new AutoFactory(m_driveTrain::getPose, 
+                                                            m_driveTrain::setInitialPose, 
+                                                            m_driveTrain::followTrajectory, 
+                                                            false, 
+                                                            m_driveTrain);
 
   private final Joystick m_driverStick = new Joystick(IOConstants.driverControllerID);
   
