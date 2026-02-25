@@ -40,15 +40,26 @@ public class Vector3D {
     public static final Vector3D getPointVelocity(Vector3D translationVelocity, 
                                                   Vector3D offsetFromAxis,
                                                   Vector3D angularVelocity) {
-        //r x omega                                            
-        Vector3D velocityFromRot = new Vector3D(offsetFromAxis.getY() * angularVelocity.getZ() - 
-                                                    offsetFromAxis.getZ() * angularVelocity.getY(),
-                                               -offsetFromAxis.getX() * angularVelocity.getZ() - 
-                                                    offsetFromAxis.getZ() * angularVelocity.getX(),
-                                                offsetFromAxis.getX() * angularVelocity.getY() - 
-                                                    offsetFromAxis.getY() * angularVelocity.getX());
     
-        return velocityFromRot.plus(translationVelocity);
+        return offsetFromAxis.getCrossProduct(angularVelocity).plus(translationVelocity);
+    }
+
+    public static final double getDotProduct(Vector3D a, Vector3D b) {
+        return a.getX() * b.getX() + a.getY() * b.getY() + a.getZ() * b.getZ();
+    }
+
+    public static final Vector3D getCrossProduct(Vector3D a, Vector3D b) {
+        return new Vector3D(a.getY() * b.getZ() - a.getZ() * b.getY(),
+                            -(a.getX() * b.getZ() - a.getZ() * b.getX()),
+                            a.getX() * b.getY() - a.getY() * b.getX());
+    }
+
+    public double getDotProduct(Vector3D other) {
+        return getDotProduct(this, other);
+    }
+
+    public Vector3D getCrossProduct(Vector3D other) {
+        return getCrossProduct(this, other);
     }
 
     public Vector3D minus(Vector3D other) {
@@ -68,7 +79,7 @@ public class Vector3D {
     }
 
     public Rotation2d getXYAngle() {
-        return Rotation2d.fromRadians(Math.atan(getX() / getY()));
+        return (getY() < 1e-6 && getX() < 1e-6 ? new Rotation2d() : Rotation2d.fromRadians(Math.atan2(getY(), getX()))); 
     }
 
     public double getX() {

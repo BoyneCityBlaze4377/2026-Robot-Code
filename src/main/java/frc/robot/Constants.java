@@ -167,29 +167,24 @@ public final class Constants {
 
   public static final class ShooterConstants {
     /* ID's */
-    public static final int shooterMotorID = 0;
-    public static final int indexerMotorID = 0;
+    public static final int flyWheelMotor1ID = 0;
+    public static final int flyWheelMotor2ID = 0;
+    public static final int spindexerID = 0;
+    public static final int indexerID = 0;
     public static final int turretMotorID = 0;  
     public static final int hoodMotorID = 0;
 
     public static final int aimingEncoderID = 0;
     public static final int hoodEncoderID = 0;
-    public static final int flywheelEncoderID = 0;
 
     /* NeutralModes */
-    public static final NeutralModeValue shootingMotorNeutralMode = NeutralModeValue.Coast;
-    public static final NeutralModeValue indexingNeutralModeValue = NeutralModeValue.Brake;
     public static final NeutralModeValue turretNeutralModeValue = NeutralModeValue.Brake;
     public static final NeutralModeValue hoodNeutralModeValue = NeutralModeValue.Brake;
     
     /* Speed and Control */
-    public static final double indexingSpeed = .5;
-    public static final double timeBetweenShots = .1;
-
-    public static final double shootingKP = 0.1; //.01
-    public static final double shootingKI = 0.0;
-    public static final double shootingKD = 0.0;
-    public static final double shootingKTolerance = .5; 
+    public static final double revFlywheelSpeed = .85;
+    public static final double spindexerSpeed = .2;
+    public static final double indexingSpeed = 1;
 
     public static final double shooterMaxVoltage = 16;
     public static final double shooterMaxDutyCycle = 1;
