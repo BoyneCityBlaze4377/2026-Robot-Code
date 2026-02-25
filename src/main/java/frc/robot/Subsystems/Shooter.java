@@ -1,6 +1,5 @@
 package frc.robot.Subsystems;
 
-import java.util.Vector;
 import java.util.function.Supplier;
 
 import com.ctre.phoenix6.configs.CANcoderConfiguration;
@@ -9,6 +8,15 @@ import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.FeedbackSensorSourceValue;
+import com.revrobotics.PersistMode;
+import com.revrobotics.RelativeEncoder;
+import com.revrobotics.ResetMode;
+import com.revrobotics.spark.SparkFlex;
+import com.revrobotics.spark.SparkMax;
+import com.revrobotics.spark.SparkLowLevel.MotorType;
+import com.revrobotics.spark.config.SparkFlexConfig;
+import com.revrobotics.spark.config.SparkMaxConfig;
+import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 
 import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.geometry.Pose3d;
@@ -25,11 +33,19 @@ import frc.robot.Constants.ShooterConstants;
 import frc.robot.Subsystems.DriveTrain.DriveTrainZoneState;
 
 public class Shooter extends SubsystemBase {
-  private final TalonFX m_shooter, m_indexer, m_turret, m_hood;
-  private final TalonFXConfiguration m_shooterConfig, m_indexerConfig, m_turretConfig, m_hoodConfig;
+  private final TalonFX m_turret, m_hood;
+  private final TalonFXConfiguration m_turretConfig, m_hoodConfig;
 
-  private final CANcoder m_aimingEncoder, m_hoodEncoder, m_flywheelEncoder;
-  private final CANcoderConfiguration m_aimingEncoderConfig, m_hoodEncoderConfig, m_flywheelEncoderConfig;
+  private final SparkFlex m_flyWheelMotor1, m_flyWheelMotor2;
+  private final SparkFlexConfig m_flyWheel1Config, m_flyWheel2Config;
+
+  private final SparkMax m_spindexer, m_indexer;
+  private final SparkMaxConfig m_spindexerConfig, m_indexerConfig;
+
+  private final CANcoder m_aimingEncoder, m_hoodEncoder;
+  private final CANcoderConfiguration m_aimingEncoderConfig, m_hoodEncoderConfig;
+
+  private final RelativeEncoder m_flywheelEncoder;
 
   private final ProfiledPIDController m_aimingController, m_hoodController;
 
@@ -47,28 +63,38 @@ public class Shooter extends SubsystemBase {
   private Pose3d currentPosition3D = new Pose3d();
   private Vector3D currentVelocity = new Vector3D();
 
+  private boolean canShoot = false;
+
   /** Creates a new Shooter. */
   public Shooter(Supplier<AdvancedPose2D> driveTrainPosition, 
                  Supplier<ChassisSpeeds> driveTrainVelocity,
                  Supplier<Vector3D> driveTrainAngularVelocity,
                  Supplier<DriveTrain.DriveTrainZoneState> zoneState) {
-    m_shooter = new TalonFX(ShooterConstants.shooterMotorID);
-    m_indexer = new TalonFX(ShooterConstants.indexerMotorID);
     m_turret = new TalonFX(ShooterConstants.turretMotorID);
     m_hood = new TalonFX(ShooterConstants.hoodMotorID);
 
+    m_flyWheelMotor1 = new SparkFlex(ShooterConstants.flyWheelMotor1ID, MotorType.kBrushless);
+    m_flyWheelMotor2 = new SparkFlex(ShooterConstants.flyWheelMotor2ID, MotorType.kBrushless);
+
+    m_spindexer = new SparkMax(ShooterConstants.spindexerID, MotorType.kBrushless);
+    m_indexer = new SparkMax(ShooterConstants.indexerID, MotorType.kBrushless);
+
     m_aimingEncoder = new CANcoder(ShooterConstants.aimingEncoderID);
     m_hoodEncoder = new CANcoder(ShooterConstants.hoodEncoderID);
-    m_flywheelEncoder = new CANcoder(ShooterConstants.flywheelEncoderID);
 
-    m_shooterConfig = new TalonFXConfiguration();
-    m_indexerConfig = new TalonFXConfiguration();
+    m_flywheelEncoder = m_flyWheelMotor1.getEncoder();
+
     m_turretConfig = new TalonFXConfiguration();
     m_hoodConfig = new TalonFXConfiguration();
 
+    m_flyWheel1Config = new SparkFlexConfig();
+    m_flyWheel2Config = new SparkFlexConfig();
+
+    m_spindexerConfig = new SparkMaxConfig();
+    m_indexerConfig = new SparkMaxConfig();
+
     m_aimingEncoderConfig = new CANcoderConfiguration();
     m_hoodEncoderConfig = new CANcoderConfiguration();
-    m_flywheelEncoderConfig = new CANcoderConfiguration();
 
     m_aimingController = new ProfiledPIDController(ShooterConstants.aimingKP, 
                                                    ShooterConstants.aimingKI, 
@@ -79,8 +105,6 @@ public class Shooter extends SubsystemBase {
                                                  ShooterConstants.aimingKI, 
                                                  ShooterConstants.aimingKD, 
                                                  ShooterConstants.aimingControllerConstraints);
-
-    m_shooter.setPosition(0);
 
     m_driveTrainPositionSupplier = driveTrainPosition;
     m_driveTrainVelocitySupplier = driveTrainVelocity;
@@ -101,6 +125,8 @@ public class Shooter extends SubsystemBase {
                                                new Rotation2d());
     currentPosition3D = new Pose3d(currentPosition.getX(), currentPosition.getY(), AutoAimConstants.turretOffsetPos.getZ(), 
                                    new Rotation3d());
+
+    canShoot = true;
     
     currentVelocity = Vector3D.getPointVelocity(new Vector3D(driveTrainSpeeds.vxMetersPerSecond, 
                                                              driveTrainSpeeds.vyMetersPerSecond), 
@@ -109,26 +135,19 @@ public class Shooter extends SubsystemBase {
 
     aimAt(currentZone == DriveTrainZoneState.AllianceZone ? FieldConstants.hubPosition : 
           new Pose3d(currentPosition.getClosest(FieldConstants.leftShuttleTarget, FieldConstants.rightShuttleTarget)));
+
+    if (canShoot) revFlywheel();
   }
 
   public void configMotorDefaults() {
-    //ShooterMotor
-    m_shooterConfig.Audio.BeepOnBoot = false;
+    //ShooterMotors
+    m_flyWheel1Config.inverted(false);
+    m_flyWheel1Config.idleMode(IdleMode.kCoast);
+    m_flyWheel2Config.follow(m_flyWheelMotor1, true);
 
-    m_shooterConfig.ClosedLoopGeneral.ContinuousWrap = false;
-    m_shooterConfig.MotorOutput.NeutralMode = ShooterConstants.shootingMotorNeutralMode;
-    m_shooterConfig.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;
-    m_shooterConfig.MotorOutput.PeakForwardDutyCycle = ShooterConstants.shooterMaxDutyCycle;
-    m_shooterConfig.Voltage.PeakForwardVoltage = ShooterConstants.shooterMaxVoltage;
-
-    m_shooterConfig.Slot0.kP = ShooterConstants.shootingKP;
-    m_shooterConfig.Slot0.kI = ShooterConstants.shootingKI;
-    m_shooterConfig.Slot0.kD = ShooterConstants.shootingKD;
-
-    //IndexerMotor
-    m_indexerConfig.Audio.BeepOnBoot = false;
-
-    m_indexerConfig.MotorOutput.NeutralMode = ShooterConstants.indexingNeutralModeValue;
+    //Indexers
+    m_spindexerConfig.idleMode(IdleMode.kCoast);
+    m_indexerConfig.idleMode(IdleMode.kCoast);
 
     //TurretMotor
     m_turretConfig.Audio.BeepOnBoot = false;
@@ -158,27 +177,48 @@ public class Shooter extends SubsystemBase {
     m_aimingEncoderConfig.MagnetSensor.AbsoluteSensorDiscontinuityPoint = ShooterConstants.aimingEncoderRange;
     m_aimingEncoderConfig.MagnetSensor.SensorDirection = ShooterConstants.aimingEncoderSensorDirection;
 
-    m_shooter.getConfigurator().apply(m_shooterConfig);
-    m_indexer.getConfigurator().apply(m_indexerConfig);
     m_turret.getConfigurator().apply(m_turretConfig);
     m_hood.getConfigurator().apply(m_hoodConfig);
     m_aimingEncoder.getConfigurator().apply(m_aimingEncoderConfig);
+
+    m_flyWheelMotor1.configure(m_flyWheel1Config, ResetMode.kNoResetSafeParameters, PersistMode.kPersistParameters);
+    m_flyWheelMotor2.configure(m_flyWheel2Config, ResetMode.kNoResetSafeParameters, PersistMode.kPersistParameters);
+    m_spindexer.configure(m_spindexerConfig, ResetMode.kNoResetSafeParameters, PersistMode.kPersistParameters);
+    m_indexer.configure(m_indexerConfig, ResetMode.kNoResetSafeParameters, PersistMode.kPersistParameters);
   }
 
-  public void genericShoot(double speed) {
-    m_shooter.set(speed);
+  private void genericShoot(double speed) {
+    m_flyWheelMotor1.set(speed);
   }
 
-  public void velocityshoot(double velocity) { 
-    m_shooter.setControl(new VelocityVoltage(velocity).withSlot(0));
+  public void revFlywheel() {
+    genericShoot(ShooterConstants.revFlywheelSpeed);
   }
 
-  public void index() {
+  private void runSpindexer() {
+    m_spindexer.set(ShooterConstants.spindexerSpeed);
+  }
+
+  private void stopSpindexer() {
+    m_spindexer.set(0);
+  }
+
+  private void runIndexer() {
     m_indexer.set(ShooterConstants.indexingSpeed);
   }
 
-  public void stopIndex() {
+  private void stopIndexer() {
     m_indexer.set(0);
+  }
+
+  public void runIndexers() {
+    runIndexer();
+    runSpindexer();
+  }
+
+  public void stopIndexers() {
+    stopIndexer();
+    stopSpindexer();
   }
 
   public void aimTurret(Rotation2d desiredAngle) {
@@ -194,16 +234,22 @@ public class Shooter extends SubsystemBase {
   }
 
   public void aimAt(Pose3d targetPose) {
-    double flyWheelVelocity = m_flywheelEncoder.getVelocity().getValueAsDouble();
-    Pose3d maximum = new Pose3d(AdvancedPose2D.getMidpoint(currentPosition, 
-                                                           new AdvancedPose2D(targetPose.getX(), targetPose.getY())).getX(),
-                                AdvancedPose2D.getMidpoint(currentPosition, 
-                                                           new AdvancedPose2D(targetPose.getX(), targetPose.getY())).getY(),
-                                AutoAimConstants.maxShotHeight,
-                                new Rotation3d());
-    
-    Vector3D vectorTowardsMax = new Vector3D(maximum.minus(currentPosition3D).getX(),
-                                             maximum.minus(currentPosition3D).getY(),
-                                             maximum.minus(currentPosition3D).getZ());
+    double flyWheelVelocity = m_flywheelEncoder.getVelocity();
+    double horizDistance = targetPose.getX() - currentPosition.getX();
+    double vertDistance = targetPose.getZ() - currentPosition3D.getZ();
+
+    double c = -4.9 * Math.pow(horizDistance / flyWheelVelocity, 2) - vertDistance;
+
+                              //-b             +/- sqrt(b^2
+    double quadFormSolution = -horizDistance + Math.sqrt(Math.pow(horizDistance, 2) -
+                                                         4 * -4.9 * Math.pow(horizDistance / flyWheelVelocity, 2) * c) / // -4ac)
+                                                         -9.8 * Math.pow(horizDistance / flyWheelVelocity, 2); // /2a
+    Rotation2d hoodAngle = Rotation2d.fromRadians(Math.atan(quadFormSolution));
+
+    Vector3D turretAimVector = Vector3D.fromPoints(currentPosition3D, targetPose).minus(currentVelocity);
+    Rotation2d turretAngle = Rotation2d.fromRadians(Math.atan(turretAimVector.getY() / turretAimVector.getX()));
+
+    aimTurret(turretAngle);
+    angleHood(hoodAngle);
   }
 }
