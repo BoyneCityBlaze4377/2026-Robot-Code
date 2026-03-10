@@ -167,15 +167,14 @@ public final class Constants {
 
   public static final class ShooterConstants {
     /* ID's */
-    public static final int flyWheelMotor1ID = 0;
-    public static final int flyWheelMotor2ID = 0;
-    public static final int spindexerID = 0;
-    public static final int indexerID = 0;
-    public static final int turretMotorID = 0;  
-    public static final int hoodMotorID = 0;
+    public static final int flyWheelMotor1ID = 14;
+    public static final int flyWheelMotor2ID = 15;
+    public static final int spindexerID = 20;
+    public static final int indexerID = 21;
+    public static final int turretMotorID = 13;  
+    public static final int hoodMotorID = 16;
 
     public static final int aimingEncoderID = 0;
-    public static final int hoodEncoderID = 0;
 
     /* NeutralModes */
     public static final NeutralModeValue turretNeutralModeValue = NeutralModeValue.Brake;
@@ -193,7 +192,7 @@ public final class Constants {
     public static final double aimingKI = 0.0;
     public static final double aimingKD = 0.0;
     public static final double aimingKTolerance = .5;
-    public static final Constraints aimingControllerConstraints = new Constraints(Math.PI * 4, Math.PI * 8);
+    public static final Constraints aimingControllerConstraints = new Constraints(0, 0);
 
     public static final double turretMaxVoltage = 16;
     public static final double turretMaxDutyCycle = 1;
@@ -202,13 +201,21 @@ public final class Constants {
     public static final double hoodKI = 0.0;
     public static final double hoodKD = 0.0;
     public static final double hoodKTolerance = .5;
-    public static final Constraints hoodControllerConstraints = new Constraints(Math.PI * 4, Math.PI * 8);
+    public static final Constraints hoodControllerConstraints = new Constraints(0, 0);
 
     public static final double hoodMaxVoltage = 16;
     public static final double hoodMaxDutyCycle = 1;
 
     public static final double maxHoodHeight = 0;
     public static final double minHoodHeight = 0;
+
+    public static final double velocityKP = 0.1; //.01
+    public static final double velocityKI = 0.0;
+    public static final double velocityKD = 0.0;
+    public static final double velocityKTolerance = .5;
+
+    public static final double minVelocity = 0;
+    public static final double maxVelocity = 0;
 
     /* Aiming */
     public static final SensorDirectionValue aimingEncoderSensorDirection = SensorDirectionValue.CounterClockwise_Positive;
@@ -223,12 +230,18 @@ public final class Constants {
 
   public static final class CollectorConstants {
     /* ID's */
-    public static final int collectorMotorID = 0;
-    public static final int deployMotorID = 0;
+    public static final int collectorMotorID = 19;
+    public static final int deployMotorID = 17;
+
+    public static final int deployEncoderID = 18;
 
     /* NeutralModes */
     public static final IdleMode collectorMotorNeutralMode = IdleMode.kCoast;
     public static final NeutralModeValue deployMotorNeutralMode = NeutralModeValue.Brake;
+
+    /* Encoder Stuff */
+    public static final double encoderRange = 1; //[0,1]
+    public static final SensorDirectionValue encoderDirection = SensorDirectionValue.Clockwise_Positive;
 
     /* Speed and Control */
     public static final double collectionSpeed = .5;
@@ -245,16 +258,12 @@ public final class Constants {
   }
 
   public static final class ClimberConstants {
-    public static final int climberMotorID = 0;
-    public static final int climberEncoderID = 0;
+    public static final int climberMotorID = 22;
 
     public static final double climberMaxVoltage = 16;
     public static final double climberMaxDutyCycle = 1;
 
-    public static final SensorDirectionValue climberEncoderSensorDirection = SensorDirectionValue.CounterClockwise_Positive;
-
-    public static final double maxExtensionPos = 0;
-    public static final double mediumClimbPos = 0;
+    public static final double maxHeightPos = 0;
     public static final double minHeightPos = 0;
 
     public static final double climberKP = 0;
@@ -271,11 +280,14 @@ public final class Constants {
     public static final double netHeight = Units.inchesToMeters(120.36);
     public static final double hubCenterX = Units.inchesToMeters(182.11);
 
+    public static final double trenchWidth = Units.inchesToMeters(50.35);
+
     public static final AdvancedPose2D hubCoordinates = new AdvancedPose2D(Units.inchesToMeters(182.11), fieldWidth / 2);
     public static final Pose3d hubPosition = new Pose3d(hubCoordinates.getX(), 
                                                         hubCoordinates.getY(), 
                                                         hubOpeningHeight, 
                                                         new Rotation3d());
+
     public static final AdvancedPose2D leftShuttleTarget = new AdvancedPose2D(autonLineDistance / 2, fieldWidth * 3 / 4);
     public static final AdvancedPose2D rightShuttleTarget = new AdvancedPose2D(autonLineDistance / 2, fieldWidth / 4);
 
@@ -283,6 +295,12 @@ public final class Constants {
                                                      new AdvancedPose2D(hubCenterX, fieldWidth));
     public static final Zone neutralZone = new Zone(new AdvancedPose2D(hubCenterX, 0), 
                                                     new AdvancedPose2D(fieldLength - hubCenterX, fieldWidth));
+    public static final Zone trenchZone = new Zone(new AdvancedPose2D(autonLineDistance, 0), 
+                                                   new AdvancedPose2D(fieldLength/2 - 120, fieldWidth));
+    public static final Zone rightTrench = new Zone(trenchZone.getBL(), new AdvancedPose2D(fieldLength/2 - 120, trenchWidth));
+    public static final Zone leftTrench = new Zone(new AdvancedPose2D(autonLineDistance, fieldWidth - trenchWidth), 
+                                                   trenchZone.getTR());
+
   }
 
   public class AutoAimConstants {
@@ -301,6 +319,8 @@ public final class Constants {
 
     public static final double maxShotHeight = FieldConstants.hubOpeningHeight + 1;
 
+    public static final double dotProductThreshold = .25;
+
     public static final Vector<N3> poseEstimateOdometryStdDev = VecBuilder.fill(.05, .05, Units.degreesToRadians(.2));
     public static final Vector<N3> poseEstimateVisionStdDev = VecBuilder.fill(.1, .1, Units.degreesToRadians(3));
     public static final Vector<N3> poseEstimateCrashVisionStdDev = VecBuilder.fill(.02, .02, Units.degreesToRadians(2));
@@ -312,7 +332,8 @@ public final class Constants {
     /** LIMELIGHT */
     public static final String limeLightName = "limelight";
   }
-   public class PathPlaner {
+
+  public class PathPlaner {
     public static RobotConfig config;
   }
 }

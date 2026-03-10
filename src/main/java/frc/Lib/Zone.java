@@ -25,6 +25,14 @@ public class Zone {
         return m_TR.getY();
     }
 
+    public AdvancedPose2D getBL() {
+        return m_BL;
+    }
+
+    public AdvancedPose2D getTR() {
+        return m_TR;
+    }
+
     public double getLength() {
         return Math.abs(m_TR.getX() - m_BL.getX());
     }

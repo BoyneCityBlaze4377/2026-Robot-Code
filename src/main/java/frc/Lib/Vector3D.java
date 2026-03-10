@@ -33,22 +33,22 @@ public class Vector3D {
         return new Vector3D(tip.getX() - tail.getX(), tip.getY() - tail.getY(), tip.getZ() - tail.getZ());
     }
 
-    public static final Vector3D fromPoints(AdvancedPose2D tail, AdvancedPose2D tip) {
+    public static Vector3D fromPoints(AdvancedPose2D tail, AdvancedPose2D tip) {
         return Vector3D.fromPoints(new Pose3d(tail), new Pose3d(tip));
     }
 
-    public static final Vector3D getPointVelocity(Vector3D translationVelocity, 
+    public static Vector3D getPointVelocity(Vector3D translationVelocity, 
                                                   Vector3D offsetFromAxis,
                                                   Vector3D angularVelocity) {
     
         return offsetFromAxis.getCrossProduct(angularVelocity).plus(translationVelocity);
     }
 
-    public static final double getDotProduct(Vector3D a, Vector3D b) {
+    public static double getDotProduct(Vector3D a, Vector3D b) {
         return a.getX() * b.getX() + a.getY() * b.getY() + a.getZ() * b.getZ();
     }
 
-    public static final Vector3D getCrossProduct(Vector3D a, Vector3D b) {
+    public static Vector3D getCrossProduct(Vector3D a, Vector3D b) {
         return new Vector3D(a.getY() * b.getZ() - a.getZ() * b.getY(),
                             -(a.getX() * b.getZ() - a.getZ() * b.getX()),
                             a.getX() * b.getY() - a.getY() * b.getX());
