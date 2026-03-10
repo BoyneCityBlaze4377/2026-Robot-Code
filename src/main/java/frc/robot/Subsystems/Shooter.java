@@ -2,37 +2,38 @@
 
 // import java.util.function.Supplier;
 
-// import com.ctre.phoenix6.configs.CANcoderConfiguration;
-// import com.ctre.phoenix6.configs.TalonFXConfiguration;
-// import com.ctre.phoenix6.controls.VelocityVoltage;
-// import com.ctre.phoenix6.hardware.CANcoder;
-// import com.ctre.phoenix6.hardware.TalonFX;
-// import com.ctre.phoenix6.signals.FeedbackSensorSourceValue;
-// import com.revrobotics.PersistMode;
-// import com.revrobotics.RelativeEncoder;
-// import com.revrobotics.ResetMode;
-// import com.revrobotics.spark.SparkFlex;
-// import com.revrobotics.spark.SparkMax;
-// import com.revrobotics.spark.SparkLowLevel.MotorType;
-// import com.revrobotics.spark.config.SparkFlexConfig;
-// import com.revrobotics.spark.config.SparkMaxConfig;
-// import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
+import com.ctre.phoenix6.configs.CANcoderConfiguration;
+import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.hardware.CANcoder;
+import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.mechanisms.swerve.LegacySwerveRequest.FieldCentric;
+import com.ctre.phoenix6.signals.FeedbackSensorSourceValue;
+import com.revrobotics.PersistMode;
+import com.revrobotics.RelativeEncoder;
+import com.revrobotics.ResetMode;
+import com.revrobotics.spark.SparkClosedLoopController;
+import com.revrobotics.spark.SparkFlex;
+import com.revrobotics.spark.SparkMax;
+import com.revrobotics.spark.SparkBase.ControlType;
+import com.revrobotics.spark.SparkLowLevel.MotorType;
+import com.revrobotics.spark.config.SparkFlexConfig;
+import com.revrobotics.spark.config.SparkMaxConfig;
+import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 
-// import edu.wpi.first.math.controller.ProfiledPIDController;
-// import edu.wpi.first.math.geometry.Pose3d;
-// import edu.wpi.first.math.geometry.Rotation2d;
-// import edu.wpi.first.math.geometry.Rotation3d;
-// import edu.wpi.first.math.kinematics.ChassisSpeeds;
-// import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-// import edu.wpi.first.wpilibj2.command.Command;
-// import edu.wpi.first.wpilibj2.command.Commands;
-// import edu.wpi.first.wpilibj2.command.SubsystemBase;
-// import frc.Lib.AdvancedPose2D;
-// import frc.Lib.Vector3D;
-// import frc.robot.Constants.AutoAimConstants;
-// import frc.robot.Constants.FieldConstants;
-// import frc.robot.Constants.ShooterConstants;
-// import frc.robot.Subsystems.DriveTrain.DriveTrainZoneState;
+import edu.wpi.first.math.controller.ProfiledPIDController;
+import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Rotation3d;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.Lib.AdvancedPose2D;
+import frc.Lib.Vector3D;
+import frc.robot.Constants.AutoAimConstants;
+import frc.robot.Constants.FieldConstants;
+import frc.robot.Constants.ShooterConstants;
+import frc.robot.Subsystems.DriveTrain.DriveTrainZoneState;
 
 // public class Shooter extends SubsystemBase {
 //   private final TalonFX m_turret, m_hood;
@@ -44,12 +45,13 @@
 //   private final SparkMax m_spindexer, m_indexer;
 //   private final SparkMaxConfig m_spindexerConfig, m_indexerConfig;
 
-//   private final CANcoder m_aimingEncoder, m_hoodEncoder;
-//   private final CANcoderConfiguration m_aimingEncoderConfig, m_hoodEncoderConfig;
+  private final CANcoder m_aimingEncoder;
+  private final CANcoderConfiguration m_aimingEncoderConfig;
 
 //   private final RelativeEncoder m_flywheelEncoder;
 
-//   private final ProfiledPIDController m_aimingController, m_hoodController;
+  private final ProfiledPIDController m_aimingController, m_hoodController;
+  private final SparkClosedLoopController m_velocityController;
 
 //   private final Supplier<AdvancedPose2D> m_driveTrainPositionSupplier;
 //   private final Supplier<ChassisSpeeds> m_driveTrainVelocitySupplier;
@@ -65,7 +67,8 @@
 //   private Pose3d currentPosition3D = new Pose3d();
 //   private Vector3D currentVelocity = new Vector3D();
 
-//   private boolean canShoot = false;
+  private boolean canShoot = false;
+  private Rotation2d turretAngle, hoodAngle;
 
 //   /** Creates a new Shooter. */
 //   public Shooter(Supplier<AdvancedPose2D> driveTrainPosition, 
@@ -81,8 +84,7 @@
 //     m_spindexer = new SparkMax(ShooterConstants.spindexerID, MotorType.kBrushless);
 //     m_indexer = new SparkMax(ShooterConstants.indexerID, MotorType.kBrushless);
 
-//     m_aimingEncoder = new CANcoder(ShooterConstants.aimingEncoderID);
-//     m_hoodEncoder = new CANcoder(ShooterConstants.hoodEncoderID);
+    m_aimingEncoder = new CANcoder(ShooterConstants.aimingEncoderID);
 
 //     m_flywheelEncoder = m_flyWheelMotor1.getEncoder();
 
@@ -95,8 +97,7 @@
 //     m_spindexerConfig = new SparkMaxConfig();
 //     m_indexerConfig = new SparkMaxConfig();
 
-//     m_aimingEncoderConfig = new CANcoderConfiguration();
-//     m_hoodEncoderConfig = new CANcoderConfiguration();
+    m_aimingEncoderConfig = new CANcoderConfiguration();
 
 //     m_aimingController = new ProfiledPIDController(ShooterConstants.aimingKP, 
 //                                                    ShooterConstants.aimingKI, 
@@ -108,19 +109,23 @@
 //                                                  ShooterConstants.aimingKD, 
 //                                                  ShooterConstants.aimingControllerConstraints);
 
-//     m_driveTrainPositionSupplier = driveTrainPosition;
-//     m_driveTrainVelocitySupplier = driveTrainVelocity;
-//     m_driveTrainAngularVelocitySupplier = driveTrainAngularVelocity;
-//     m_driveTrainZoneStateSupplier = zoneState;
-//   }
+    m_velocityController = m_flyWheelMotor1.getClosedLoopController();
 
-//   @Override
-//   public void periodic() {
-//     // This method will be called once per scheduler run
-//     driveTrainPos = m_driveTrainPositionSupplier.get();
-//     driveTrainSpeeds = m_driveTrainVelocitySupplier.get();
-//     driveTrainOmega = m_driveTrainAngularVelocitySupplier.get();
-//     currentZone = m_driveTrainZoneStateSupplier.get();
+    m_driveTrainPositionSupplier = driveTrainPosition;
+    m_driveTrainVelocitySupplier = driveTrainVelocity;
+    m_driveTrainAngularVelocitySupplier = driveTrainAngularVelocity;
+    m_driveTrainZoneStateSupplier = zoneState;
+  }
+
+  @Override
+  public void periodic() {
+    // This method will be called once per scheduler run
+    driveTrainPos = m_driveTrainPositionSupplier.get();
+    driveTrainSpeeds = m_driveTrainVelocitySupplier.get();
+    driveTrainOmega = m_driveTrainAngularVelocitySupplier.get();
+    currentZone = m_driveTrainZoneStateSupplier.get();
+
+    Vector3D driveTrainVelocityVector = new Vector3D(driveTrainSpeeds.vxMetersPerSecond, driveTrainSpeeds.vyMetersPerSecond);
 
 //     currentPosition = driveTrainPos.withVector(driveTrainPos.getRotation().plus(AutoAimConstants.turretOffsetPos.getXYAngle()), 
 //                                                AutoAimConstants.turretOffsetCoordinates.getTranslation(), 
@@ -128,18 +133,33 @@
 //     currentPosition3D = new Pose3d(currentPosition.getX(), currentPosition.getY(), AutoAimConstants.turretOffsetPos.getZ(), 
 //                                    new Rotation3d());
 
-//     canShoot = true;
+    Vector3D vectorToTrench = Vector3D.fromPoints(driveTrainPos, driveTrainPos.getClosest(
+                                                                          FieldConstants.leftTrench.getMidpoint(), 
+                                                                          FieldConstants.rightTrench.getMidpoint()));
+    canShoot = !FieldConstants.trenchZone.pointInZone(driveTrainPos) &&
+               vectorToTrench.getDotProduct(driveTrainVelocityVector) < 
+                  AutoAimConstants.dotProductThreshold * Math.pow(vectorToTrench.get2DMagnitude(), 2);
     
 //     currentVelocity = Vector3D.getPointVelocity(new Vector3D(driveTrainSpeeds.vxMetersPerSecond, 
 //                                                              driveTrainSpeeds.vyMetersPerSecond), 
 //                                                 new Vector3D(AutoAimConstants.turretOffsetCoordinates), 
 //                                                 driveTrainOmega);                     
 
-//     aimAt(currentZone == DriveTrainZoneState.AllianceZone ? FieldConstants.hubPosition : 
-//           new Pose3d(currentPosition.getClosest(FieldConstants.leftShuttleTarget, FieldConstants.rightShuttleTarget)));
+    Pose3d targetPose = currentZone == DriveTrainZoneState.AllianceZone ? FieldConstants.hubPosition : 
+                          new Pose3d(currentPosition.getClosest(FieldConstants.leftShuttleTarget, 
+                                                                FieldConstants.rightShuttleTarget));
+    if (canShoot) {
+      revFlywheel();
+      aimAt(targetPose);
+    } else {
+      hoodAngle = Rotation2d.fromDegrees(ShooterConstants.minHoodHeight);
+    }
 
-//     if (canShoot) revFlywheel();
-//   }
+    Vector3D turretAimVector = Vector3D.fromPoints(currentPosition3D, targetPose).minus(currentVelocity);
+    turretAngle = Rotation2d.fromRadians(Math.atan(turretAimVector.getY() / turretAimVector.getX()));
+    aimTurret(turretAngle);
+    angleHood(hoodAngle);
+  }
 
 //   public void configMotorDefaults() {
 //     //ShooterMotors
@@ -193,9 +213,13 @@
 //     m_flyWheelMotor1.set(speed);
 //   }
 
-//   public void revFlywheel() {
-//     genericShoot(ShooterConstants.revFlywheelSpeed);
-//   }
+  public void revFlywheel() {
+    genericShoot(ShooterConstants.revFlywheelSpeed);
+  }
+
+  public void revFlywheel(double velocity) {
+    m_velocityController.setSetpoint(velocity, ControlType.kVelocity);
+  }
 
 //   private void runSpindexer() {
 //     m_spindexer.set(ShooterConstants.spindexerSpeed);
@@ -229,11 +253,11 @@
 //                                               desiredAngle.getDegrees()));
 //   }
 
-//   public void angleHood(Rotation2d desiredAngle) {
-//     m_turret.set(m_hoodController.calculate(m_hoodEncoder.getAbsolutePosition().getValueAsDouble() *
-//                                             ShooterConstants.hoodConversionFactor, 
-//                                             desiredAngle.getDegrees()));
-//   }
+  public void angleHood(Rotation2d desiredAngle) {
+    m_turret.set(m_hoodController.calculate(m_hood.getPosition().getValueAsDouble() *
+                                            ShooterConstants.hoodConversionFactor, 
+                                            desiredAngle.getDegrees()));
+  }
 
 //   public void aimAt(Pose3d targetPose) {
 //     double flyWheelVelocity = m_flywheelEncoder.getVelocity();
@@ -242,16 +266,15 @@
 
 //     double c = -4.9 * Math.pow(horizDistance / flyWheelVelocity, 2) - vertDistance;
 
-//                               //-b             +/- sqrt(b^2
-//     double quadFormSolution = -horizDistance + Math.sqrt(Math.pow(horizDistance, 2) -
-//                                                          4 * -4.9 * Math.pow(horizDistance / flyWheelVelocity, 2) * c) / // -4ac)
-//                                                          -9.8 * Math.pow(horizDistance / flyWheelVelocity, 2); // /2a
-//     Rotation2d hoodAngle = Rotation2d.fromRadians(Math.atan(quadFormSolution));
+                              //-b             +/- sqrt(b^2
+    double quadFormSolution = -horizDistance + Math.sqrt(Math.pow(horizDistance, 2) -
+                                                         4 * -4.9 * Math.pow(horizDistance / flyWheelVelocity, 2) * c) / // -4ac)
+                                                         -9.8 * Math.pow(horizDistance / flyWheelVelocity, 2); // /2a
+    hoodAngle = Rotation2d.fromRadians(Math.atan(quadFormSolution));
+  }
 
-//     Vector3D turretAimVector = Vector3D.fromPoints(currentPosition3D, targetPose).minus(currentVelocity);
-//     Rotation2d turretAngle = Rotation2d.fromRadians(Math.atan(turretAimVector.getY() / turretAimVector.getX()));
-
-//     aimTurret(turretAngle);
-//     angleHood(hoodAngle);
-//   }
-// }
+  private Command runIndex() {
+    return Commands.runEnd(() -> this.runIndexers(), 
+                           () -> this.stopIndexers());
+  }
+}

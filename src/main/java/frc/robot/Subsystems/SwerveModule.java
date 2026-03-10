@@ -2,7 +2,6 @@ package frc.robot.Subsystems;
 
 import com.ctre.phoenix6.configs.CANcoderConfiguration;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
-import com.ctre.phoenix6.controls.VelocityDutyCycle;
 import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.FeedbackSensorSourceValue;
@@ -130,7 +129,7 @@ public class SwerveModule {
       (Math.abs(desiredState.speedMetersPerSecond) <= (DriveConstants.maxSpeedMetersPerSecond * .01)) 
        ? getAngle() : desiredState.angle;
 
-    turningController.setGoal(desiredState.angle.getDegrees());
+    turningController.setGoal(angle.getDegrees());
     m_turningMotor.set(turningController.atGoal() ? 0 : -turningController.calculate(getAbsoluteEncoder()));
     }
 

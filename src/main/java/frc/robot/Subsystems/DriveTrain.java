@@ -29,7 +29,6 @@ import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.util.sendable.Sendable;
 import edu.wpi.first.util.sendable.SendableBuilder;
 import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -79,14 +78,13 @@ public class DriveTrain extends SubsystemBase {
   private final Debouncer crashDetectDebouncer = new Debouncer(DriveConstants.crashDebounceTime);
 
   private final String cameraName;
-  private Alliance m_alliance;
 
   private DriveTrainZoneState currentZone = DriveTrainZoneState.AllianceZone;
 
   private AdvancedPose2D initialPose = new AdvancedPose2D(), lastPose;
   private ChassisSpeeds currentSpeeds = new ChassisSpeeds();
 
-  private boolean fieldOrientation = true, isBrake = true, autonInRange = false, isBlue = true, notified = false, 
+  private boolean fieldOrientation = true, isBrake = true, autonInRange = false, notified = false, 
                   crash = false, hasCrashed = false;
 
   private double tx, ty, ta, tID, speedScaler, heading, x, y, omega;
@@ -243,8 +241,6 @@ public class DriveTrain extends SubsystemBase {
 
     speedScaler = DriveConstants.speedScaler;
 
-    m_alliance = Alliance.Blue;
-
     lastAccel = new TimedValue(0, 0);
 
     headingController.enableContinuousInput(-Math.PI, Math.PI);
@@ -322,7 +318,6 @@ public class DriveTrain extends SubsystemBase {
     
     // Update random stuff
     isBrake = m_frontLeft.getNeutralMode() == NeutralModeValue.Brake;
-    isBlue = m_alliance == Alliance.Blue;
 
     // Drive Robot
     rawDrive(x , y, omega);
@@ -750,21 +745,6 @@ public class DriveTrain extends SubsystemBase {
 
   public void resetPose() {
     poseEstimator.resetPose(initialPose);
-  }
-
-  /**
-   * Set the Alliance for the match
-   * 
-   * @param alliance The Alliance to be set
-   */
-  public synchronized void setAlliance(Alliance alliance) {
-    m_alliance = alliance;
-    isBlue = (m_alliance == Alliance.Blue);
-  }
-
-  /** @return The Alliance for the current match */
-  public synchronized Alliance getAlliance() {
-    return m_alliance;
   }
 
   public void setToVisionPos() {
