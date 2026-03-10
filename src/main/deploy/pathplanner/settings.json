@@ -6,9 +6,9 @@
     "Starts"
   ],
   "autoFolders": [
-    "PreBall",
     "HP",
-    "Middle"
+    "Mid",
+    "PreBall"
   ],
   "defaultMaxVel": 3.0,
   "defaultMaxAccel": 3.0,

@@ -262,8 +262,8 @@ public class DriveTrain extends SubsystemBase {
                           this :: getChassisSpeeds, 
                           this :: chassisSpeedDrive,
                           new PPHolonomicDriveController(
-                            new PIDConstants(AutoAimConstants.transkP,AutoAimConstants.transkI,AutoAimConstants.transkD),
-                            new PIDConstants(AutoAimConstants.turnkP, AutoAimConstants.turnkI, AutoAimConstants.turnkD)), 
+                            new PIDConstants(AutoAimConstants.PPtranskP,AutoAimConstants.PPtranskI,AutoAimConstants.PPtranskD),
+                            new PIDConstants(AutoAimConstants.PPturnkP, AutoAimConstants.PPturnkI, AutoAimConstants.PPturnkD)), 
                           PathPlaner.config,
                           () -> false,
                           this);
@@ -773,6 +773,20 @@ public class DriveTrain extends SubsystemBase {
     }
   }
 
+  //choreo
+  public void followTrajectory(SwerveSample sample) {
+    Pose2d pose = getPose();
+
+    ChassisSpeeds speeds = new ChassisSpeeds( 
+      sample.vx + xController.calculate(pose.getX(), sample.x), 
+      sample.vy + yController.calculate(pose.getY(), sample.y),
+      sample.omega + headingController.calculate(pose.getRotation().getRadians(), sample.heading));
+
+    chassisSpeedDrive(speeds);
+
+    SmartDashboard.putString("ChassisSpeeds", speeds.toString());
+  }
+
   /** COMMANDS */
   public Command TeleopDrive(DoubleSupplier xSupplier, DoubleSupplier ySupplier, DoubleSupplier omegaSupplier) {
     return Commands.runEnd(() -> this.teleopDrive(xSupplier.getAsDouble(), ySupplier.getAsDouble(), omegaSupplier.getAsDouble()),
@@ -786,17 +800,8 @@ public class DriveTrain extends SubsystemBase {
                              this);
   }
 
-  //choreo
-  public void followTrajectory(SwerveSample sample) {
-    Pose2d pose = getPose();
-
-    ChassisSpeeds speeds = new ChassisSpeeds( 
-      sample.vx + xController.calculate(pose.getX(), sample.x), 
-      sample.vy + yController.calculate(pose.getY(), sample.y),
-      sample.omega + headingController.calculate(pose.getRotation().getRadians(), sample.heading));
-
-    chassisSpeedDrive(speeds);
-
-    SmartDashboard.putString("ChassisSpeeds", speeds.toString());
+  public Command RobotOreinted() {
+    return Commands.runOnce(() -> this.setOrientation(false), 
+                            this);
   }
 }

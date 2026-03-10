@@ -3,10 +3,11 @@ package frc.robot;
 import choreo.auto.AutoFactory;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.JoystickButton;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.IOConstants;
-import frc.robot.Subsystems.*;
+import frc.robot.Subsystems.DriveTrain;
 
 /**
  * This class is where the bulk of the robot should be declared. Since Command-based is a
@@ -16,12 +17,12 @@ import frc.robot.Subsystems.*;
  */
 public class RobotContainer {
   private final DriveTrain m_driveTrain = new DriveTrain();
-  private final Shooter m_shooter = new Shooter(m_driveTrain::getAdvancedPose,
-                                                m_driveTrain::getChassisSpeeds,
-                                                m_driveTrain::getAngularVelocityVector,
-                                                m_driveTrain::getCurrentZone);
-  private final Collector m_collector = new Collector();
-  private final Climber m_climber = new Climber();
+  // private final Shooter m_shooter = new Shooter(m_driveTrain::getAdvancedPose,
+  //                                               m_driveTrain::getChassisSpeeds,
+  //                                               m_driveTrain::getAngularVelocityVector,
+  //                                               m_driveTrain::getCurrentZone);
+  // private final Collector m_collector = new Collector();
+  // private final Climber m_climber = new Climber();
 
   private final AutoFactory m_autoFactory = new AutoFactory(m_driveTrain::getPose, 
                                                             m_driveTrain::setInitialPose, 
@@ -51,6 +52,10 @@ public class RobotContainer {
    */
   private void configureBindings() {
     new JoystickButton(m_driverStick, IOConstants.quickBrakeButtonID).toggleOnTrue(m_driveTrain.QuickBrake());
+    // new JoystickButton(m_driverStick, IOConstants.slowModeButtonID).whileTrue(m_driveTrain.);
+  //   new JoystickButton(m_driverStick, IOConstants.lockPoseButtonID).whileTrue(LockPose);
+  //   new JoystickButton(m_driverStick, IOConstants.switchOrientationButtonID).onTrue(SwitchOrientation);
+    new JoystickButton(m_driverStick, IOConstants.robotOrientButtonID).whileTrue(m_driveTrain.RobotOreinted());
   }
 
   /**

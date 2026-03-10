@@ -296,6 +296,15 @@ public final class Constants {
     public static final double turnkD = 0; //0
     public static final double turnkTolerance = .03;
 
+    //PathPlanner use
+    public static final double PPtranskP = 2;//2
+    public static final double PPtranskI = 0;
+    public static final double PPtranskD = 0;
+
+    public static final double PPturnkP = 4.5;//4.5
+    public static final double PPturnkI = .355;//.355
+    public static final double PPturnkD = 0;
+
     public static final AdvancedPose2D turretOffsetCoordinates = new AdvancedPose2D();
     public static final Vector3D turretOffsetPos = new Vector3D();
 
