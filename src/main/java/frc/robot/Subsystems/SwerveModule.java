@@ -124,9 +124,9 @@ public class SwerveModule {
    */
   public void setAngle(SwerveModuleState desiredState) {
     m_desiredState = desiredState;
-    // Prevent rotating module if speed is less then 1%. Prevents jittering.
+    // Prevent rotating module if speed is less then 2%. Prevents jittering.
     Rotation2d angle = 
-      (Math.abs(desiredState.speedMetersPerSecond) <= (DriveConstants.maxSpeedMetersPerSecond * .01)) 
+      (Math.abs(desiredState.speedMetersPerSecond) <= (DriveConstants.maxSpeedMetersPerSecond * .02)) 
        ? getAngle() : desiredState.angle;
 
     turningController.setGoal(angle.getDegrees());

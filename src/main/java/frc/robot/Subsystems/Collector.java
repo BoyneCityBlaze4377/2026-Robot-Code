@@ -1,4 +1,6 @@
-// package frc.robot.Subsystems;
+package frc.robot.Subsystems;
+
+import java.util.Queue;
 
 import com.ctre.phoenix6.configs.CANcoderConfiguration;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
@@ -12,6 +14,7 @@ import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.config.SparkMaxConfig;
 
 import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -21,87 +24,96 @@ public class Collector extends SubsystemBase {
   private final TalonFX m_deployMotor;
   private final SparkMax m_collectorMotor;
 
-  private final CANcoder m_deployEncoder;
-
   private final TalonFXConfiguration m_deployMotorConfig;
   private final SparkMaxConfig m_collectorMotorConfig;
 
-  private final CANcoderConfiguration m_deployEncoderConfig;
-
   private final PIDController m_deployController;
 
-  private double setpoint;
+  private final Timer m_timer = new Timer();
+
+  private double setpoint, jostleSpeed = 0;
+  private boolean isJostling = false;
 
   /** Creates a new Collector. */
   public Collector() {
     m_collectorMotor = new SparkMax(CollectorConstants.collectorMotorID, MotorType.kBrushless);
     m_deployMotor = new TalonFX(CollectorConstants.deployMotorID);
 
-    m_deployEncoder = new CANcoder(CollectorConstants.deployEncoderID);
-
-//     m_collectorMotorConfig = new SparkMaxConfig();
-//     m_deployMotorConfig = new TalonFXConfiguration();
-
-    m_deployEncoderConfig = new CANcoderConfiguration();
+    m_collectorMotorConfig = new SparkMaxConfig();
+    m_deployMotorConfig = new TalonFXConfiguration();
 
     m_deployController = new PIDController(CollectorConstants.deployKP, 
                                            CollectorConstants.deployKI, 
                                            CollectorConstants.deployKD);
 
-    setpoint = m_deployEncoder.getPosition().getValueAsDouble();
+    setpoint = m_deployMotor.getPosition().getValueAsDouble();
   }
 
   @Override
   public void periodic() {
     // This method will be called once per scheduler run
-    moveCollector();
+    //moveCollector();
+    //collect();
   }
 
-//   public void configMotorDefaults() {
-//     //CollectorMotor
-//     m_collectorMotorConfig.idleMode(CollectorConstants.collectorMotorNeutralMode);
+  public void configMotorDefaults() {
+    //CollectorMotor
+    m_collectorMotorConfig.idleMode(CollectorConstants.collectorMotorNeutralMode);
 
-//     //DeployMotor
-//     m_deployMotorConfig.Audio.BeepOnBoot = false;
+    //DeployMotor
+    m_deployMotorConfig.Audio.BeepOnBoot = false;
 
-//     m_deployMotorConfig.ClosedLoopGeneral.ContinuousWrap = false;
-//     m_deployMotorConfig.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;
+    m_deployMotorConfig.ClosedLoopGeneral.ContinuousWrap = false;
+    m_deployMotorConfig.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;
 
-//     m_deployMotorConfig.MotorOutput.PeakForwardDutyCycle = CollectorConstants.deployMotorMaxDutyCycle;
-//     m_deployMotorConfig.MotorOutput.PeakReverseDutyCycle = -CollectorConstants.deployMotorMaxDutyCycle;
+    m_deployMotorConfig.MotorOutput.PeakForwardDutyCycle = CollectorConstants.deployMotorMaxDutyCycle;
+    m_deployMotorConfig.MotorOutput.PeakReverseDutyCycle = -CollectorConstants.deployMotorMaxDutyCycle;
 
-//     m_deployMotorConfig.Voltage.PeakForwardVoltage = CollectorConstants.deployMotorMaxVoltage;
-//     m_deployMotorConfig.Voltage.PeakReverseVoltage = -CollectorConstants.deployMotorMaxVoltage;
+    m_deployMotorConfig.Voltage.PeakForwardVoltage = CollectorConstants.deployMotorMaxVoltage;
+    m_deployMotorConfig.Voltage.PeakReverseVoltage = -CollectorConstants.deployMotorMaxVoltage;
 
-//     m_deployMotorConfig.Slot0.kP = CollectorConstants.deployKP;
-//     m_deployMotorConfig.Slot0.kI = CollectorConstants.deployKI;
-//     m_deployMotorConfig.Slot0.kD = CollectorConstants.deployKD;
-
-    //DeployEncoder
-    m_deployEncoderConfig.MagnetSensor.AbsoluteSensorDiscontinuityPoint = CollectorConstants.encoderRange;
-    m_deployEncoderConfig.MagnetSensor.SensorDirection = CollectorConstants.encoderDirection;
+    m_deployMotorConfig.Slot0.kP = CollectorConstants.deployKP;
+    m_deployMotorConfig.Slot0.kI = CollectorConstants.deployKI;
+    m_deployMotorConfig.Slot0.kD = CollectorConstants.deployKD;
 
     //Load Configs
     m_collectorMotor.configure(m_collectorMotorConfig, ResetMode.kNoResetSafeParameters, PersistMode.kPersistParameters);
     m_deployMotor.getConfigurator().apply(m_deployMotorConfig);
-    m_deployEncoder.getConfigurator().apply(m_deployEncoderConfig);
   }
 
   public void moveCollector() {
-    m_deployMotor.set(m_deployController.calculate(m_deployEncoder.getPosition().getValueAsDouble(), setpoint));
+    m_deployMotor.set(m_deployController.calculate(m_deployMotor.getPosition().getValueAsDouble(), setpoint) + jostleSpeed);
+  }
+
+  public double getJostleSpeed(double time) {
+    isJostling = true;
+    int intervalID = (int) Math.floor(time / CollectorConstants.jostleInterval) % 2;
+    double timeBasedSpeed = (intervalID < 1e-6 ? CollectorConstants.jostleSpeedDifferential : 
+                                                -CollectorConstants.jostleSpeedDifferential);
+    return (!(CollectorConstants.deployedPos - getPosition() < CollectorConstants.closeToExtendedTolerance) 
+                      ? timeBasedSpeed : -CollectorConstants.jostleSpeedDifferential);
+  }
+
+  public void stopJostle() {
+    jostleSpeed = 0;
+    isJostling = false;
   }
 
   public void setSetpoint(double target) {
     setpoint = target;
   }
 
-//   public void collect() {
-//     m_collectorMotor.set(CollectorConstants.collectionSpeed);
-//   }
+  public void collect() {
+    m_collectorMotor.set(CollectorConstants.collectionSpeed);
+  }
 
-//   public void stopCollector() {
-//     m_collectorMotor.set(0);
-//   }
+  public void stopCollector() {
+    m_collectorMotor.set(0);
+  }
+
+  public double getPosition() {
+    return m_deployMotor.getPosition().getValueAsDouble();
+  }
 
   private Command runCollector() {
     return Commands.runEnd(() -> this.collect(), 
@@ -117,6 +129,15 @@ public class Collector extends SubsystemBase {
   }
 
   public Command Collect() {
-    return Commands.parallel(this.deployCollector(), this.runCollector());
+    return Commands.parallel(this.deployCollector(), this.runCollector(), this.Jostle());
+  }
+
+  public Command Jostle() {
+    return Commands.runEnd(() -> {
+      if (!isJostling) m_timer.restart();
+      jostleSpeed = getJostleSpeed(m_timer.get());
+    }, () -> {
+      stopJostle();
+    });
   }
 }

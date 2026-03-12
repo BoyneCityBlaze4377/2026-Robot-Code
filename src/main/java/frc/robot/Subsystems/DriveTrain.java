@@ -780,7 +780,7 @@ public class DriveTrain extends SubsystemBase {
                              this);
   }
 
-  public Command RobotOreinted() {
+  public Command RobotOriented() {
     return Commands.runOnce(() -> this.setOrientation(false), 
                             this);
   }

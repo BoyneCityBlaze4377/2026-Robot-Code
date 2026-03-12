@@ -79,7 +79,7 @@ public final class Constants {
     public static final double maxRotationAccelerationRadiansPerSecondSquared = 2 * maxRotationSpeedRadiansPerSecond;
 
     public static final double translationalDeadband = .15;
-    public static final double rotationalDeadband = .4;
+    public static final double rotationalDeadband = .5;
 
     public static final double jerkCrashTheshold = maxAccelerationMetersPerSecondSquared * Math.sqrt(2);
     public static final double crashDebounceTime = .1;
@@ -169,12 +169,10 @@ public final class Constants {
     /* ID's */
     public static final int flyWheelMotor1ID = 14;
     public static final int flyWheelMotor2ID = 15;
-    public static final int spindexerID = 20;
-    public static final int indexerID = 21;
+    public static final int spindexerID = 19;
+    public static final int indexerID = 20;
     public static final int turretMotorID = 13;  
     public static final int hoodMotorID = 16;
-
-    public static final int aimingEncoderID = 0;
 
     /* NeutralModes */
     public static final NeutralModeValue turretNeutralModeValue = NeutralModeValue.Brake;
@@ -209,18 +207,10 @@ public final class Constants {
     public static final double maxHoodHeight = 0;
     public static final double minHoodHeight = 0;
 
-    public static final double velocityKP = 0.1; //.01
-    public static final double velocityKI = 0.0;
-    public static final double velocityKD = 0.0;
-    public static final double velocityKTolerance = .5;
-
-    public static final double minVelocity = 0;
-    public static final double maxVelocity = 0;
+    public static final double minVelocity = .2;
+    public static final double maxVelocity = 1;
 
     /* Aiming */
-    public static final SensorDirectionValue aimingEncoderSensorDirection = SensorDirectionValue.CounterClockwise_Positive;
-    public static final double aimingEncoderRange = .5; //[-.5, .5)
-
     public static final double turretGearRatioFromEncoder = 1;
     public static final double aimingConversionFactor = 360 / turretGearRatioFromEncoder;
 
@@ -230,21 +220,15 @@ public final class Constants {
 
   public static final class CollectorConstants {
     /* ID's */
-    public static final int collectorMotorID = 19;
+    public static final int collectorMotorID = 18;
     public static final int deployMotorID = 17;
-
-    public static final int deployEncoderID = 18;
 
     /* NeutralModes */
     public static final IdleMode collectorMotorNeutralMode = IdleMode.kCoast;
     public static final NeutralModeValue deployMotorNeutralMode = NeutralModeValue.Brake;
 
-    /* Encoder Stuff */
-    public static final double encoderRange = 1; //[0,1]
-    public static final SensorDirectionValue encoderDirection = SensorDirectionValue.Clockwise_Positive;
-
     /* Speed and Control */
-    public static final double collectionSpeed = .5;
+    public static final double collectionSpeed = -.25;
 
     public static final double deployMotorMaxDutyCycle = 1;
     public static final double deployMotorMaxVoltage = 12;
@@ -255,10 +239,14 @@ public final class Constants {
 
     public static final double deployedPos = 0;
     public static final double retractedPos = 0;
+
+    public static final double jostleInterval = .5;
+    public static final double jostleSpeedDifferential = .1;
+    public static final double closeToExtendedTolerance = 0;
   }
 
   public static final class ClimberConstants {
-    public static final int climberMotorID = 22;
+    public static final int climberMotorID = 21;
 
     public static final double climberMaxVoltage = 16;
     public static final double climberMaxDutyCycle = 1;
@@ -290,6 +278,8 @@ public final class Constants {
 
     public static final AdvancedPose2D leftShuttleTarget = new AdvancedPose2D(autonLineDistance / 2, fieldWidth * 3 / 4);
     public static final AdvancedPose2D rightShuttleTarget = new AdvancedPose2D(autonLineDistance / 2, fieldWidth / 4);
+
+    public static final AdvancedPose2D outpostPos = new AdvancedPose2D(SwerveConstants.trackWidth, SwerveConstants.wheelBase);
 
     public static final Zone allianceZone = new Zone(new AdvancedPose2D(), 
                                                      new AdvancedPose2D(hubCenterX, fieldWidth));

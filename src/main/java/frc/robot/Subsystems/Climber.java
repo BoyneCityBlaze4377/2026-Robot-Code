@@ -1,10 +1,11 @@
-// package frc.robot.Subsystems;
+package frc.robot.Subsystems;
 
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 
 import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.ClimberConstants;
 
@@ -23,15 +24,23 @@ public class Climber extends SubsystemBase {
                                             ClimberConstants.climberKI, 
                                             ClimberConstants.climberKD); 
 
-//     configDefaults();
-//   }
+    configDefaults();
 
-//   public void configDefaults() {
-//     //Motor
-//     m_climberMotorConfig.Audio.BeepOnBoot = false;
+    SmartDashboard.putBoolean("ClimberInit", true);
+  }
 
-//     m_climberMotorConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;
-//     m_climberMotorConfig.ClosedLoopGeneral.ContinuousWrap = false;
+  @Override
+  public void periodic() {
+    // This method will be called once per scheduler run
+    //m_climberMotor.set(.1);
+  }
+
+  public void configDefaults() {
+    //Motor
+    m_climberMotorConfig.Audio.BeepOnBoot = false;
+
+    m_climberMotorConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;
+    m_climberMotorConfig.ClosedLoopGeneral.ContinuousWrap = false;
 
     m_climberMotorConfig.MotorOutput.PeakForwardDutyCycle = ClimberConstants.climberMaxDutyCycle;
     m_climberMotorConfig.MotorOutput.PeakReverseDutyCycle = -ClimberConstants.climberMaxDutyCycle;
@@ -39,11 +48,6 @@ public class Climber extends SubsystemBase {
     m_climberMotorConfig.Voltage.PeakReverseVoltage = -ClimberConstants.climberMaxVoltage;
 
     m_climberMotor.getConfigurator().apply(m_climberMotorConfig);
-  }
-
-  @Override
-  public void periodic() {
-    // This method will be called once per scheduler run
   }
 
   private void climberUp() {
