@@ -220,7 +220,7 @@ public class Shooter extends SubsystemBase {
                       (ShooterConstants.maxVelocity - ShooterConstants.minVelocity) *
                       (driveTrainPos.getDistance(FieldConstants.hubCoordinates) / FieldConstants.outpostPos
                                                                                     .getDistance(FieldConstants.hubCoordinates));
-    genericShoot(velocity);
+    genericShoot(velocity + ShooterConstants.velocityAddOn);
   }
 
   private void runSpindexer() {
