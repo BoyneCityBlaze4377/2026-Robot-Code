@@ -288,7 +288,7 @@ public final class Constants {
     public static final AdvancedPose2D leftShuttleTarget = new AdvancedPose2D(autonLineDistance / 2, fieldWidth * 3 / 4);
     public static final AdvancedPose2D rightShuttleTarget = new AdvancedPose2D(autonLineDistance / 2, fieldWidth / 4);
 
-    public static final AdvancedPose2D outpostPos = new AdvancedPose2D(SwerveConstants.trackWidth, SwerveConstants.wheelBase);
+    public static final AdvancedPose2D outpostPos = new AdvancedPose2D(SwerveConstants.robotWidth, SwerveConstants.robotWidth);
 
     public static final Zone allianceZone = new Zone(new AdvancedPose2D(), 
                                                      new AdvancedPose2D(hubCenterX, fieldWidth));
@@ -324,8 +324,6 @@ public final class Constants {
 
     public static final AdvancedPose2D turretOffsetCoordinates = new AdvancedPose2D();
     public static final Vector3D turretOffsetPos = new Vector3D();
-
-    public static final double maxShotHeight = FieldConstants.hubOpeningHeight + 1;
 
     public static final double dotProductThreshold = .25;
 
