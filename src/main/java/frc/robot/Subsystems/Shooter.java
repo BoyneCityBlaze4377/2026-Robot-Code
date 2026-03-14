@@ -112,57 +112,57 @@ public class Shooter extends SubsystemBase {
     m_driveTrainVelocitySupplier = driveTrainVelocity;
     m_driveTrainAngularVelocitySupplier = driveTrainAngularVelocity;
     m_driveTrainZoneStateSupplier = zoneState;
+
+    SmartDashboard.putNumber("MaxDist", FieldConstants.neutralZone.getTR().getDistance(FieldConstants.leftShuttleTarget));
   }
 
   @Override
   public void periodic() {
     // This method will be called once per scheduler run
-    // driveTrainPos = m_driveTrainPositionSupplier.get();
-    // driveTrainSpeeds = m_driveTrainVelocitySupplier.get();
-    // driveTrainOmega = m_driveTrainAngularVelocitySupplier.get();
-    // currentZone = m_driveTrainZoneStateSupplier.get();
+    driveTrainPos = m_driveTrainPositionSupplier.get();
+    driveTrainSpeeds = m_driveTrainVelocitySupplier.get();
+    driveTrainOmega = m_driveTrainAngularVelocitySupplier.get();
+    currentZone = m_driveTrainZoneStateSupplier.get();
 
-    // Vector3D driveTrainVelocityVector = new Vector3D(driveTrainSpeeds.vxMetersPerSecond, driveTrainSpeeds.vyMetersPerSecond);
+    Vector3D driveTrainVelocityVector = new Vector3D(driveTrainSpeeds.vxMetersPerSecond, driveTrainSpeeds.vyMetersPerSecond);
 
-    // currentPosition = driveTrainPos.withVector(driveTrainPos.getRotation().plus(AutoAimConstants.turretOffsetPos.getXYAngle()), 
-    //                                            AutoAimConstants.turretOffsetCoordinates.getTranslation(), 
-    //                                            new Rotation2d());
-    // currentPosition3D = new Pose3d(currentPosition.getX(), currentPosition.getY(), AutoAimConstants.turretOffsetPos.getZ(), 
-    //                                new Rotation3d());
+    currentPosition = driveTrainPos.withVector(driveTrainPos.getRotation().plus(AutoAimConstants.turretOffsetPos.getXYAngle()), 
+                                               AutoAimConstants.turretOffsetCoordinates.getTranslation(), 
+                                               new Rotation2d());
+    currentPosition3D = new Pose3d(currentPosition.getX(), currentPosition.getY(), AutoAimConstants.turretOffsetPos.getZ(), 
+                                   new Rotation3d());
 
-    // Vector3D vectorToTrench = Vector3D.fromPoints(driveTrainPos, driveTrainPos.getClosest(
-    //                                                                       FieldConstants.leftTrench.getMidpoint(), 
-    //                                                                       FieldConstants.rightTrench.getMidpoint()));
-    // canShoot = !FieldConstants.trenchZone.pointInZone(driveTrainPos) &&
+    Vector3D vectorToTrench = Vector3D.fromPoints(driveTrainPos, driveTrainPos.getClosest(
+                                                                          FieldConstants.leftTrench.getMidpoint(), 
+                                                                          FieldConstants.rightTrench.getMidpoint()));
+    canShoot = true;
+    // !FieldConstants.trenchZone.pointInZone(driveTrainPos) &&
     //            vectorToTrench.getDotProduct(driveTrainVelocityVector) < 
     //               AutoAimConstants.dotProductThreshold * Math.pow(vectorToTrench.get2DMagnitude(), 2);
     
-    // currentVelocity = Vector3D.getPointVelocity(new Vector3D(driveTrainSpeeds.vxMetersPerSecond, 
-    //                                                          driveTrainSpeeds.vyMetersPerSecond), 
-    //                                             new Vector3D(AutoAimConstants.turretOffsetCoordinates), 
-    //                                             driveTrainOmega);                     
+    currentVelocity = Vector3D.getPointVelocity(new Vector3D(driveTrainSpeeds.vxMetersPerSecond, 
+                                                             driveTrainSpeeds.vyMetersPerSecond), 
+                                                new Vector3D(AutoAimConstants.turretOffsetCoordinates), 
+                                                driveTrainOmega);                     
 
-    // Pose3d targetPose = currentZone == DriveTrainZoneState.AllianceZone ? FieldConstants.hubPosition : 
-    //                       new Pose3d(currentPosition.getClosest(FieldConstants.leftShuttleTarget, 
-    //                                                             FieldConstants.rightShuttleTarget));
-    // if (canShoot) {
-    //   revFlywheel();
-    //   aimAt(targetPose);
-    // } else {
-    //   hoodAngle = Rotation2d.fromDegrees(ShooterConstants.minHoodHeight);
-    // }
+    Pose3d targetPose = currentZone == DriveTrainZoneState.AllianceZone ? FieldConstants.hubPosition : 
+                          new Pose3d(currentPosition.getClosest(FieldConstants.leftShuttleTarget, 
+                                                                FieldConstants.rightShuttleTarget));
+    if (canShoot) {
+      revFlywheel();
+      aimAt(targetPose);
+    } else {
+      hoodAngle = Rotation2d.fromDegrees(ShooterConstants.minHoodHeight);
+    }
 
-    // Vector3D turretAimVector = Vector3D.fromPoints(currentPosition3D, targetPose).minus(currentVelocity);
-    // turretAngle = Rotation2d.fromRadians(Math.atan(turretAimVector.getY() / turretAimVector.getX()));
-    // aimTurret(turretAngle);
-    // angleHood(hoodAngle);
+    Vector3D turretAimVector = Vector3D.fromPoints(currentPosition3D, targetPose).minus(currentVelocity);
+    turretAngle = Rotation2d.fromRadians(Math.atan(turretAimVector.getY() / turretAimVector.getX()));
+    aimTurret(turretAngle);
+    angleHood(hoodAngle);
 
-    m_flyWheelMotor1.set(.3);
-    m_spindexer.set(.75);
-    m_indexer.set(.4);
-
-    SmartDashboard.putNumber("Turret Pos", m_turret.getPosition().getValueAsDouble());
-    SmartDashboard.putNumber("Hood Pos", m_hood.getPosition().getValueAsDouble());
+    //m_flyWheelMotor1.set(.5);
+    //m_spindexer.set(.05);
+    //m_indexer.set(.4);
   }
 
   public void configMotorDefaults() {
@@ -224,7 +224,7 @@ public class Shooter extends SubsystemBase {
                       (ShooterConstants.maxVelocity - ShooterConstants.minVelocity) *
                       (driveTrainPos.getDistance(FieldConstants.hubCoordinates) / FieldConstants.outpostPos
                                                                                     .getDistance(FieldConstants.hubCoordinates));
-    genericShoot(velocity);
+    genericShoot(velocity + ShooterConstants.velocityAddOn);
   }
 
   private void runSpindexer() {
@@ -266,17 +266,24 @@ public class Shooter extends SubsystemBase {
   }
 
   public void aimAt(Pose3d targetPose) {
-    double flyWheelVelocity = m_flywheelEncoder.getVelocity();
-    double horizDistance = targetPose.getX() - currentPosition.getX();
-    double vertDistance = targetPose.getZ() - currentPosition3D.getZ();
+    double flyWheelVelocity = 10; //m_flywheelEncoder.getVelocity();
+    double horizDistance = 5; //targetPose.getX() - currentPosition.getX();
+    double vertDistance = 2; //targetPose.getZ() - currentPosition3D.getZ();
 
-    double c = -4.9 * Math.pow(horizDistance / flyWheelVelocity, 2) - vertDistance;
+    double a = -4.9 * Math.pow(horizDistance / flyWheelVelocity, 2);
+    double b = horizDistance;
+    double c = -(4.9 * Math.pow(horizDistance / flyWheelVelocity, 2) + vertDistance);
+    double[] abc = {a, b, c};
+    SmartDashboard.putNumberArray("ABC", abc);
 
-                              //-b             +/- sqrt(b^2
-    double quadFormSolution = -horizDistance + Math.sqrt(Math.pow(horizDistance, 2) -
-                                                         4 * -4.9 * Math.pow(horizDistance / flyWheelVelocity, 2) * c) / // -4ac)
-                                                         -9.8 * Math.pow(horizDistance / flyWheelVelocity, 2); // /2a
+    double quadFormSolution = (-b - Math.sqrt(Math.pow(b, 2) - 4 * a * c)) / (2 * a);
+    SmartDashboard.putNumber("QFS", quadFormSolution);
+
     hoodAngle = Rotation2d.fromRadians(Math.atan(quadFormSolution));
+    SmartDashboard.putNumber("hood angle", hoodAngle.getDegrees());
+
+    double t = horizDistance / (flyWheelVelocity * hoodAngle.getCos());
+    SmartDashboard.putNumber("solved y", flyWheelVelocity * hoodAngle.getSin() * t - 4.9 * Math.pow(t, 2));
   }
 
   private Command runIndex() {

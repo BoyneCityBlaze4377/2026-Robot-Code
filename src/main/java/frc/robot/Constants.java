@@ -57,10 +57,13 @@ public final class Constants {
   /* Physical constants of the DriveTrain */
   public static final class SwerveConstants {
     // Distance between centers of right and left wheels on robot in meters
-    public static final double trackWidth = Units.inchesToMeters(36); //.9144
+    public static final double trackWidth = Units.inchesToMeters(20.5); //.9144
     
     // Distance between front and back wheels on robot in meters
-    public static final double wheelBase = Units.inchesToMeters(36); //.9144
+    public static final double wheelBase = Units.inchesToMeters(20.5); //.9144
+
+    public static final double bumperthickness = 3;
+    public static final double robotWidth = Units.inchesToMeters(27.5) + bumperthickness;
     
     public static final SwerveDriveKinematics driveKinematics =
         new SwerveDriveKinematics(new Translation2d(wheelBase / 2, trackWidth / 2),
@@ -179,9 +182,13 @@ public final class Constants {
     public static final NeutralModeValue hoodNeutralModeValue = NeutralModeValue.Brake;
     
     /* Speed and Control */
-    public static final double revFlywheelSpeed = .85;
-    public static final double spindexerSpeed = .2;
-    public static final double indexingSpeed = 1;
+    
+    public static final double minVelocity = .3;
+    public static final double maxVelocity = .8;
+    public static final double velocityAddOn = 0; 
+    // public static final double revFlywheelSpeed = .85;
+    public static final double spindexerSpeed = .05;
+    public static final double indexingSpeed = .5;
 
     public static final double shooterMaxVoltage = 16;
     public static final double shooterMaxDutyCycle = 1;
@@ -207,15 +214,12 @@ public final class Constants {
     public static final double maxHoodHeight = 0;
     public static final double minHoodHeight = 0;
 
-    public static final double minVelocity = .2;
-    public static final double maxVelocity = 1;
-
     /* Aiming */
-    public static final double turretGearRatioFromEncoder = 1;
-    public static final double aimingConversionFactor = 360 / turretGearRatioFromEncoder;
+    public static final double turretGearRatio = 25 / 96;
+    public static final double aimingConversionFactor = 360 / turretGearRatio;
 
-    public static final double hoodGearRatioFromEncoder = 1;
-    public static final double hoodConversionFactor = 360 / hoodGearRatioFromEncoder;
+    public static final double hoodGearRatio = 1;
+    public static final double hoodConversionFactor = 360 / hoodGearRatio;
   }
 
   public static final class CollectorConstants {
@@ -229,6 +233,9 @@ public final class Constants {
 
     /* Speed and Control */
     public static final double collectionSpeed = -.25;
+
+    public static final double deployGearRatio = 1;
+    public static final double deployConversionFactor = Units.inchesToMeters(7.853982) / deployGearRatio;
 
     public static final double deployMotorMaxDutyCycle = 1;
     public static final double deployMotorMaxVoltage = 12;
@@ -250,6 +257,8 @@ public final class Constants {
 
     public static final double climberMaxVoltage = 16;
     public static final double climberMaxDutyCycle = 1;
+
+    public static final double climberGearRatio = 1/45;
 
     public static final double maxHeightPos = 0;
     public static final double minHeightPos = 0;
@@ -279,7 +288,7 @@ public final class Constants {
     public static final AdvancedPose2D leftShuttleTarget = new AdvancedPose2D(autonLineDistance / 2, fieldWidth * 3 / 4);
     public static final AdvancedPose2D rightShuttleTarget = new AdvancedPose2D(autonLineDistance / 2, fieldWidth / 4);
 
-    public static final AdvancedPose2D outpostPos = new AdvancedPose2D(SwerveConstants.trackWidth, SwerveConstants.wheelBase);
+    public static final AdvancedPose2D outpostPos = new AdvancedPose2D(SwerveConstants.robotWidth, SwerveConstants.robotWidth);
 
     public static final Zone allianceZone = new Zone(new AdvancedPose2D(), 
                                                      new AdvancedPose2D(hubCenterX, fieldWidth));
@@ -315,8 +324,6 @@ public final class Constants {
 
     public static final AdvancedPose2D turretOffsetCoordinates = new AdvancedPose2D();
     public static final Vector3D turretOffsetPos = new Vector3D();
-
-    public static final double maxShotHeight = FieldConstants.hubOpeningHeight + 1;
 
     public static final double dotProductThreshold = .25;
 
