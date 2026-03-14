@@ -157,11 +157,12 @@ public class Shooter extends SubsystemBase {
     // aimTurret(turretAngle);
     // angleHood(hoodAngle);
 
-    //m_flyWheelMotor1.set(.5);
-    //m_spindexer.set(.05);
-    //m_indexer.set(.4);
+    m_flyWheelMotor1.set(.3);
+    m_spindexer.set(.75);
+    m_indexer.set(.4);
 
-    SmartDashboard.putNumber("Shooter Per", m_flyWheelMotor1.get());
+    SmartDashboard.putNumber("Turret Pos", m_turret.getPosition().getValueAsDouble());
+    SmartDashboard.putNumber("Hood Pos", m_hood.getPosition().getValueAsDouble());
   }
 
   public void configMotorDefaults() {
@@ -209,6 +210,9 @@ public class Shooter extends SubsystemBase {
     m_flyWheelMotor2.configure(m_flyWheel2Config, ResetMode.kNoResetSafeParameters, PersistMode.kPersistParameters);
     m_spindexer.configure(m_spindexerConfig, ResetMode.kNoResetSafeParameters, PersistMode.kPersistParameters);
     m_indexer.configure(m_indexerConfig, ResetMode.kNoResetSafeParameters, PersistMode.kPersistParameters);
+
+    m_turret.setPosition(0);
+    m_hood.setPosition(0);
   }
 
   private void genericShoot(double speed) {

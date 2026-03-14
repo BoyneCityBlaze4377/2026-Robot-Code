@@ -15,6 +15,7 @@ import com.revrobotics.spark.config.SparkMaxConfig;
 
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -47,6 +48,8 @@ public class Collector extends SubsystemBase {
                                            CollectorConstants.deployKD);
 
     setpoint = m_deployMotor.getPosition().getValueAsDouble();
+
+    m_deployMotor.setPosition(0);
   }
 
   @Override
@@ -54,6 +57,8 @@ public class Collector extends SubsystemBase {
     // This method will be called once per scheduler run
     //moveCollector();
     //collect();
+    SmartDashboard.putNumber("DeployMotor Pos", m_deployMotor.getPosition().getValueAsDouble());
+
   }
 
   public void configMotorDefaults() {

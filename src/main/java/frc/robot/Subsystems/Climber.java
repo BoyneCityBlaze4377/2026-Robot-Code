@@ -26,13 +26,15 @@ public class Climber extends SubsystemBase {
 
     configDefaults();
 
-    SmartDashboard.putBoolean("ClimberInit", true);
+    m_climberMotor.setPosition(0);
   }
 
   @Override
   public void periodic() {
     // This method will be called once per scheduler run
     //m_climberMotor.set(.1);
+    SmartDashboard.putNumber("Climber Pos", m_climberMotor.getPosition().getValueAsDouble());
+
   }
 
   public void configDefaults() {
