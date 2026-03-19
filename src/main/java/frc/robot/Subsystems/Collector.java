@@ -1,18 +1,15 @@
 package frc.robot.Subsystems;
 
-import java.util.Queue;
-
-import com.ctre.phoenix6.configs.CANcoderConfiguration;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
-import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.FeedbackSensorSourceValue;
 import com.revrobotics.PersistMode;
 import com.revrobotics.ResetMode;
-import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
+import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.config.SparkMaxConfig;
 
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -57,7 +54,9 @@ public class Collector extends SubsystemBase {
     // This method will be called once per scheduler run
     //moveCollector();
     //collect();
-    SmartDashboard.putNumber("DeployMotor Pos", m_deployMotor.getPosition().getValueAsDouble());
+    SmartDashboard.putNumber("DeployMotor Pos", m_deployMotor.getPosition().getValueAsDouble() 
+    * CollectorConstants.deployConversionFactor);
+    
 
   }
 
@@ -87,7 +86,10 @@ public class Collector extends SubsystemBase {
   }
 
   public void moveCollector() {
-    m_deployMotor.set(m_deployController.calculate(m_deployMotor.getPosition().getValueAsDouble(), setpoint) + jostleSpeed);
+    m_deployMotor.set(MathUtil.clamp(m_deployController.calculate(m_deployMotor.getPosition().getValueAsDouble() 
+                                                                  * CollectorConstants.deployConversionFactor, setpoint), 
+                                     -CollectorConstants.maxDeploySpeed, CollectorConstants.maxDeploySpeed)
+                      + jostleSpeed);
   }
 
   public double getJostleSpeed(double time) {
@@ -120,21 +122,23 @@ public class Collector extends SubsystemBase {
     return m_deployMotor.getPosition().getValueAsDouble();
   }
 
-  private Command runCollector() {
+  public Command runCollector() {
     return Commands.runEnd(() -> this.collect(), 
                            () -> this.stopCollector());
   }
 
-  private Command deployCollector() {
-    return Commands.runOnce(() -> this.setSetpoint(CollectorConstants.deployedPos), this);
+  public Command deployCollector() {
+    return Commands.runOnce(() -> this.setSetpoint(CollectorConstants.deployedPos - CollectorConstants.setpointOffset), this);
   }
 
-  private Command retractCollector() {
-    return Commands.runOnce(() -> this.setSetpoint(CollectorConstants.retractedPos), this);
+  public Command retractCollector() {
+    return Commands.runOnce(() -> this.setSetpoint(CollectorConstants.retractedPos + CollectorConstants.setpointOffset), this);
   }
 
   public Command Collect() {
-    return Commands.parallel(this.deployCollector(), this.runCollector(), this.Jostle());
+    return Commands.parallel(this.deployCollector(), this.runCollector() 
+    //, this.Jostle()
+    );
   }
 
   public Command Jostle() {

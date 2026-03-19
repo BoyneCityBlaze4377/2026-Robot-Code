@@ -6,14 +6,19 @@ import com.ctre.phoenix6.signals.NeutralModeValue;
 
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.ClimberConstants;
+import frc.robot.Constants.CollectorConstants;
 
 public class Climber extends SubsystemBase {
   private final TalonFX m_climberMotor;
   private final TalonFXConfiguration m_climberMotorConfig;
 
   private final PIDController m_climberController;
+
+  private double climberSpeed = 0;
   
   /** Creates a new Climber. */
   public Climber() {
@@ -26,15 +31,13 @@ public class Climber extends SubsystemBase {
 
     configDefaults();
 
-    m_climberMotor.setPosition(0);
+    m_climberMotor.setPosition(ClimberConstants.minHeightPos);
   }
 
   @Override
   public void periodic() {
     // This method will be called once per scheduler run
-    //m_climberMotor.set(.1);
-    SmartDashboard.putNumber("Climber Pos", m_climberMotor.getPosition().getValueAsDouble());
-
+    moveClimber();
   }
 
   public void configDefaults() {
@@ -52,13 +55,27 @@ public class Climber extends SubsystemBase {
     m_climberMotor.getConfigurator().apply(m_climberMotorConfig);
   }
 
+  private void moveClimber() {
+    m_climberMotor.set(climberSpeed);
+  }
+
+  private void stopClimber() {
+    climberSpeed = 0;
+  }
+
   private void climberUp() {
-    m_climberMotor.set(m_climberController.calculate(m_climberMotor.getPosition().getValueAsDouble(), 
-                                                     ClimberConstants.maxHeightPos));                          
+    climberSpeed = m_climberController.calculate(m_climberMotor.getPosition().getValueAsDouble(), ClimberConstants.maxHeightPos);                        
   }
 
   private void climberDown() {
-    m_climberMotor.set(m_climberController.calculate(m_climberMotor.getPosition().getValueAsDouble(), 
-                                                     ClimberConstants.minHeightPos));                          
+    climberSpeed = m_climberController.calculate(m_climberMotor.getPosition().getValueAsDouble(), ClimberConstants.minHeightPos);                          
+  }
+
+  public Command ClimberUp() {
+    return Commands.runEnd(() -> this.climberUp(), () -> this.stopClimber(), this);
+  }
+
+  public Command ClimberDown() {
+    return Commands.runEnd(() -> this.climberDown(), () -> this.stopClimber(), this);
   }
 }

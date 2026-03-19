@@ -5,6 +5,7 @@ import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.JoystickButton;
+import edu.wpi.first.wpilibj2.command.button.POVButton;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.IOConstants;
 import frc.robot.Subsystems.*;
@@ -31,6 +32,7 @@ public class RobotContainer {
                                                             m_driveTrain);
 
   private final Joystick m_driverStick = new Joystick(IOConstants.driverControllerID);
+  private final Joystick m_tempStick = new Joystick(1);
   
   /** The container for the robot. Contains subsystems, OI devices, and commands. */
   public RobotContainer() {
@@ -51,11 +53,16 @@ public class RobotContainer {
    * joysticks}.
    */
   private void configureBindings() {
+    //new JoystickButton(m_tempStick, 6).whileTrue(m_shooter.runIndex());
+    //new JoystickButton(m_tempStick, 1).whileTrue(m_collector.Collect()).onFalse(m_collector.retractCollector());
     new JoystickButton(m_driverStick, IOConstants.quickBrakeButtonID).toggleOnTrue(m_driveTrain.QuickBrake());
     // new JoystickButton(m_driverStick, IOConstants.slowModeButtonID).whileTrue(m_driveTrain.);
   //   new JoystickButton(m_driverStick, IOConstants.lockPoseButtonID).whileTrue(LockPose);
   //   new JoystickButton(m_driverStick, IOConstants.switchOrientationButtonID).onTrue(SwitchOrientation);
     new JoystickButton(m_driverStick, IOConstants.robotOrientButtonID).whileTrue(m_driveTrain.RobotOriented());
+
+    // new POVButton(m_tempStick, 0).whileTrue(m_climber.ClimberUp());
+    // new POVButton(m_tempStick, 180).whileTrue(m_climber.ClimberDown());
   }
 
   /**

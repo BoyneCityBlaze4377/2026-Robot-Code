@@ -129,7 +129,7 @@ public class DriveTrain extends SubsystemBase {
     resetEncoders();
 
     // DriveTrain GyroScope
-    m_gyro = new AHRS(NavXComType.kUSB1);
+    m_gyro = new AHRS(NavXComType.kMXP_SPI);
     m_gyro.setAngleAdjustment(initialPose.getRotation().getDegrees());
     heading = initialPose.getHeadingDegrees();
 
@@ -320,7 +320,7 @@ public class DriveTrain extends SubsystemBase {
     isBrake = m_frontLeft.getNeutralMode() == NeutralModeValue.Brake;
 
     // Drive Robot
-    rawDrive(x , y, omega);
+    // rawDrive(x , y, omega);
     //m_frontRight.setDesiredState(new SwerveModuleState(0, Rotation2d.fromDegrees(90)));
 
     //Update velocity

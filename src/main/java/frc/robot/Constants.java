@@ -187,24 +187,32 @@ public final class Constants {
     public static final double maxVelocity = .8;
     public static final double velocityAddOn = 0; 
     // public static final double revFlywheelSpeed = .85;
-    public static final double spindexerSpeed = .05;
+    public static final double spindexerSpeed = .75;
     public static final double indexingSpeed = .5;
 
     public static final double shooterMaxVoltage = 16;
     public static final double shooterMaxDutyCycle = 1;
 
-    public static final double aimingKP = 0.1; //.01
-    public static final double aimingKI = 0.0;
-    public static final double aimingKD = 0.0;
+    public static final double bigMoveAimingKP = 0.004; //.025
+    public static final double bigMoveAimingKI = 0.00001; //5e-7
+    public static final double bigMoveAimingKD = 0.00; //1
+
+    public static final double fineTuneAimingKP = 0.025; //.1
+    public static final double finetuneAimingKI = 0.00000; //5e-7
+    public static final double fineTuneAimingKD = 0.000000; //1
+
     public static final double aimingKTolerance = .5;
-    public static final Constraints aimingControllerConstraints = new Constraints(0, 0);
+    public static final double moveTypeThreshold = 15;
+
+    public static final double maxTurretOutput = .75;
+    //public static final Constraints aimingControllerConstraints = new Constraints(0, 0);
 
     public static final double turretMaxVoltage = 16;
     public static final double turretMaxDutyCycle = 1;
 
-    public static final double hoodKP = 0.1; //.01
+    public static final double hoodKP = 0.008; //.01
     public static final double hoodKI = 0.0;
-    public static final double hoodKD = 0.0;
+    public static final double hoodKD = 0.000;
     public static final double hoodKTolerance = .5;
     public static final Constraints hoodControllerConstraints = new Constraints(0, 0);
 
@@ -215,11 +223,11 @@ public final class Constants {
     public static final double minHoodHeight = 0;
 
     /* Aiming */
-    public static final double turretGearRatio = 25 / 96;
-    public static final double aimingConversionFactor = 360 / turretGearRatio;
+    public static final double turretGearRatio = 96 / 25;
+    public static final double aimingConversionFactor = 93.75; //360 / turretGearRatio;
 
     public static final double hoodGearRatio = 1;
-    public static final double hoodConversionFactor = 360 / hoodGearRatio;
+    public static final double hoodConversionFactor = 37.5 / 1.303;
   }
 
   public static final class CollectorConstants {
@@ -233,22 +241,24 @@ public final class Constants {
 
     /* Speed and Control */
     public static final double collectionSpeed = -.25;
+    public static final double maxDeploySpeed = .5;
 
     public static final double deployGearRatio = 1;
-    public static final double deployConversionFactor = Units.inchesToMeters(7.853982) / deployGearRatio;
+    public static final double deployConversionFactor = Units.inchesToMeters(13) / 15.311;
 
     public static final double deployMotorMaxDutyCycle = 1;
     public static final double deployMotorMaxVoltage = 12;
 
-    public static final double deployKP = 0;
+    public static final double deployKP = 1.2;
     public static final double deployKI = 0;
     public static final double deployKD = 0;
 
-    public static final double deployedPos = 0;
+    public static final double deployedPos = .37559;
     public static final double retractedPos = 0;
+    public static final double setpointOffset = .01;
 
     public static final double jostleInterval = .5;
-    public static final double jostleSpeedDifferential = .1;
+    public static final double jostleSpeedDifferential = .05;
     public static final double closeToExtendedTolerance = 0;
   }
 
@@ -258,12 +268,10 @@ public final class Constants {
     public static final double climberMaxVoltage = 16;
     public static final double climberMaxDutyCycle = 1;
 
-    public static final double climberGearRatio = 1/45;
-
     public static final double maxHeightPos = 0;
     public static final double minHeightPos = 0;
 
-    public static final double climberKP = 0;
+    public static final double climberKP = 0.012;
     public static final double climberKI = 0;
     public static final double climberKD = 0;
   }
