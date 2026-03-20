@@ -44,7 +44,7 @@ public class Collector extends SubsystemBase {
                                            CollectorConstants.deployKI, 
                                            CollectorConstants.deployKD);
 
-    setpoint = m_deployMotor.getPosition().getValueAsDouble();
+    setpoint = getCollectorPos();
 
     m_deployMotor.setPosition(0);
   }
@@ -52,12 +52,10 @@ public class Collector extends SubsystemBase {
   @Override
   public void periodic() {
     // This method will be called once per scheduler run
-    //moveCollector();
-    //collect();
+    moveCollector();
     SmartDashboard.putNumber("DeployMotor Pos", m_deployMotor.getPosition().getValueAsDouble() 
     * CollectorConstants.deployConversionFactor);
-    
-
+    SmartDashboard.putNumber("DeploySP", getCollectorPos());
   }
 
   public void configMotorDefaults() {
@@ -86,10 +84,17 @@ public class Collector extends SubsystemBase {
   }
 
   public void moveCollector() {
-    m_deployMotor.set(MathUtil.clamp(m_deployController.calculate(m_deployMotor.getPosition().getValueAsDouble() 
-                                                                  * CollectorConstants.deployConversionFactor, setpoint), 
+    m_deployMotor.set(MathUtil.clamp(m_deployController.calculate(getCollectorPos(), setpoint), 
                                      -CollectorConstants.maxDeploySpeed, CollectorConstants.maxDeploySpeed)
                       + jostleSpeed);
+
+    SmartDashboard.putNumber("Deploy Factor", MathUtil.clamp(m_deployController.calculate(getCollectorPos(), setpoint), 
+                                     -CollectorConstants.maxDeploySpeed, CollectorConstants.maxDeploySpeed)
+                      + jostleSpeed);
+  }
+
+  public double getCollectorPos() {
+    return m_deployMotor.getPosition().getValueAsDouble() * CollectorConstants.deployConversionFactor;
   }
 
   public double getJostleSpeed(double time) {

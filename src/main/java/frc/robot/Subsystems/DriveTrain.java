@@ -87,7 +87,7 @@ public class DriveTrain extends SubsystemBase {
   private boolean fieldOrientation = true, isBrake = true, autonInRange = false, notified = false, 
                   crash = false, hasCrashed = false;
 
-  private double tx, ty, ta, tID, speedScaler, heading, x, y, omega;
+  private double tx, ty, ta, tID, speedScaler = 1, heading, x, y, omega;
   private int periodicTimer = 1;
     
   /** Creates a new DriveTrain. */
@@ -129,7 +129,7 @@ public class DriveTrain extends SubsystemBase {
     resetEncoders();
 
     // DriveTrain GyroScope
-    m_gyro = new AHRS(NavXComType.kMXP_SPI);
+    m_gyro = new AHRS(NavXComType.kUSB1);
     m_gyro.setAngleAdjustment(initialPose.getRotation().getDegrees());
     heading = initialPose.getHeadingDegrees();
 
@@ -320,8 +320,7 @@ public class DriveTrain extends SubsystemBase {
     isBrake = m_frontLeft.getNeutralMode() == NeutralModeValue.Brake;
 
     // Drive Robot
-    // rawDrive(x , y, omega);
-    //m_frontRight.setDesiredState(new SwerveModuleState(0, Rotation2d.fromDegrees(90)));
+    rawDrive(x , y, omega);
 
     //Update velocity
     currentSpeeds = SwerveConstants.driveKinematics.toChassisSpeeds(getSwerveModuleStates());
@@ -388,13 +387,13 @@ public class DriveTrain extends SubsystemBase {
     SmartDashboard.putString("Joystick Inputs", "X: " + xSpeed + " |Y: " + ySpeed + " |rot: " + rot);
     rot = Math.pow(rot, 3);
 
-    x = MathUtil.applyDeadband(x, DriveConstants.translationalDeadband);
-    y = MathUtil.applyDeadband(y, DriveConstants.translationalDeadband);
-    omega = MathUtil.applyDeadband(rot, DriveConstants.rotationalDeadband);
+    double tempX = MathUtil.applyDeadband(xSpeed, DriveConstants.translationalDeadband);
+    double tempY = MathUtil.applyDeadband(ySpeed, DriveConstants.translationalDeadband);
+    double tempOmega = MathUtil.applyDeadband(rot, DriveConstants.rotationalDeadband);
 
-    x = xSpeed * DriveConstants.maxSpeedMetersPerSecond * speedScaler;
-    y = ySpeed * DriveConstants.maxSpeedMetersPerSecond * speedScaler;
-    omega = rot * DriveConstants.maxRotationSpeedRadiansPerSecond * speedScaler;
+    x = tempX * DriveConstants.maxSpeedMetersPerSecond * speedScaler;
+    y = tempY * DriveConstants.maxSpeedMetersPerSecond * speedScaler;
+    omega = tempOmega * DriveConstants.maxRotationSpeedRadiansPerSecond * speedScaler;
   }
 
   // /**

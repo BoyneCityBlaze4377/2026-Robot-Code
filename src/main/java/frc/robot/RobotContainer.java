@@ -38,9 +38,9 @@ public class RobotContainer {
   public RobotContainer() {
     //Configure the trigger bindings
     configureBindings();
-    m_driveTrain.setDefaultCommand(m_driveTrain.TeleopDrive(() -> -m_driverStick.getRawAxis(IOConstants.xAxis), 
-                                                            () -> -m_driverStick.getRawAxis(IOConstants.yAxis),
-                                                            () -> -m_driverStick.getRawAxis(IOConstants.omegaAxis)));
+    m_driveTrain.setDefaultCommand(m_driveTrain.TeleopDrive(() -> -m_tempStick.getRawAxis(IOConstants.xAxis), 
+                                                            () -> m_tempStick.getRawAxis(IOConstants.yAxis),
+                                                            () -> m_tempStick.getRawAxis(IOConstants.omegaAxis)));
   }
 
   /**
@@ -53,13 +53,13 @@ public class RobotContainer {
    * joysticks}.
    */
   private void configureBindings() {
-    //new JoystickButton(m_tempStick, 6).whileTrue(m_shooter.runIndex());
-    //new JoystickButton(m_tempStick, 1).whileTrue(m_collector.Collect()).onFalse(m_collector.retractCollector());
-    new JoystickButton(m_driverStick, IOConstants.quickBrakeButtonID).toggleOnTrue(m_driveTrain.QuickBrake());
+    new JoystickButton(m_tempStick, 6).whileTrue(m_shooter.runIndex());
+    new JoystickButton(m_tempStick, 1).whileTrue(m_collector.Collect()).onFalse(m_collector.retractCollector());
+    // new JoystickButton(m_driverStick, IOConstants.quickBrakeButtonID).toggleOnTrue(m_driveTrain.QuickBrake());
     // new JoystickButton(m_driverStick, IOConstants.slowModeButtonID).whileTrue(m_driveTrain.);
   //   new JoystickButton(m_driverStick, IOConstants.lockPoseButtonID).whileTrue(LockPose);
   //   new JoystickButton(m_driverStick, IOConstants.switchOrientationButtonID).onTrue(SwitchOrientation);
-    new JoystickButton(m_driverStick, IOConstants.robotOrientButtonID).whileTrue(m_driveTrain.RobotOriented());
+    // new JoystickButton(m_driverStick, IOConstants.robotOrientButtonID).whileTrue(m_driveTrain.RobotOriented());
 
     // new POVButton(m_tempStick, 0).whileTrue(m_climber.ClimberUp());
     // new POVButton(m_tempStick, 180).whileTrue(m_climber.ClimberDown());

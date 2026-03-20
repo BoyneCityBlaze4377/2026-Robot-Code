@@ -114,7 +114,7 @@ public class Shooter extends SubsystemBase {
 
     configMotorDefaults();
 
-    m_hood.setPosition(0);
+    //m_hood.setPosition(0);
     //m_turret.setPosition(0);
     hoodAngle = Rotation2d.fromDegrees(m_hood.getPosition().getValueAsDouble() * ShooterConstants.hoodConversionFactor);
     turretAngle = Rotation2d.fromDegrees(m_turret.getPosition().getValueAsDouble() * ShooterConstants.aimingConversionFactor);
@@ -170,7 +170,8 @@ public class Shooter extends SubsystemBase {
     SmartDashboard.putNumber("Turret Pos", getTurretPos());
     SmartDashboard.putNumber("HoodPos", getHoodPos());
 
-    aimTurret(Rotation2d.fromDegrees(0));
+    //aimTurret(Rotation2d.fromDegrees(0));
+    revFlywheel();
   }
 
   public void configMotorDefaults() {
@@ -225,7 +226,7 @@ public class Shooter extends SubsystemBase {
   }
 
   public void revFlywheel() {
-    double velocity = ShooterConstants.maxVelocity;
+    double velocity = .4; //ShooterConstants.maxVelocity;
                       // ShooterConstants.minVelocity + 
                       // (ShooterConstants.maxVelocity - ShooterConstants.minVelocity) *
                       // (driveTrainPos.getDistance(FieldConstants.hubCoordinates) / FieldConstants.outpostPos
