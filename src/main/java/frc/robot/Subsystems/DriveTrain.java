@@ -87,7 +87,7 @@ public class DriveTrain extends SubsystemBase {
   private boolean fieldOrientation = true, isBrake = true, autonInRange = false, notified = false, 
                   crash = false, hasCrashed = false;
 
-  private double tx, ty, ta, tID, speedScaler = 1, heading, x, y, omega;
+  private double tx, ty, ta, tID, speedScaler, heading, x, y, omega;
   private int periodicTimer = 1;
     
   /** Creates a new DriveTrain. */
@@ -130,8 +130,10 @@ public class DriveTrain extends SubsystemBase {
 
     // DriveTrain GyroScope
     m_gyro = new AHRS(NavXComType.kUSB1);
-    m_gyro.setAngleAdjustment(initialPose.getRotation().getDegrees());
-    heading = initialPose.getHeadingDegrees();
+    m_gyro.reset();
+    m_gyro.zeroYaw();
+    // m_gyro.setAngleAdjustment(initialPose.getRotation().getDegrees());
+    //heading = initialPose.getHeadingDegrees();
 
     /* Pose Estimation */
     estimateField = new Field2d();
@@ -192,7 +194,7 @@ public class DriveTrain extends SubsystemBase {
         builder.addDoubleProperty("Back Right Angle", () -> m_backRight.getState().angle.getRadians(), null);
         builder.addDoubleProperty("Back Right Velocity", () -> m_backRight.getState().speedMetersPerSecond, null);
 
-        builder.addDoubleProperty("Robot Angle", () -> m_gyro.getRotation2d().getRadians(), null);
+        builder.addDoubleProperty("Robot Angle", () -> getHeading().getRadians(), null);
       }
     });
 
@@ -214,7 +216,7 @@ public class DriveTrain extends SubsystemBase {
         builder.addDoubleProperty("Back Right Angle", () -> m_backRight.getDesiredState().angle.getRadians(), null);
         builder.addDoubleProperty("Back Right Velocity", () -> m_backRight.getDesiredState().speedMetersPerSecond, null);
 
-        builder.addDoubleProperty("Robot Angle", () -> m_gyro.getRotation2d().getRadians(), null);
+        builder.addDoubleProperty("Robot Angle", () -> getHeading().getRadians(), null);
       }
     });
 
@@ -364,7 +366,7 @@ public class DriveTrain extends SubsystemBase {
     omegaSender.setDouble(omega);
 
     ChassisSpeeds desiredSpeeds = fieldOrientation
-                           ? ChassisSpeeds.fromFieldRelativeSpeeds(xSpeed, ySpeed, omega, m_gyro.getRotation2d()) 
+                           ? ChassisSpeeds.fromFieldRelativeSpeeds(xSpeed, ySpeed, omega, getHeading()) 
                            : new ChassisSpeeds(xSpeed, ySpeed, omega);
     SwerveModuleState[] swerveModuleStates = SwerveConstants.driveKinematics.toSwerveModuleStates(desiredSpeeds);
 

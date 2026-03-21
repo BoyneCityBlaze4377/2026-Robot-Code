@@ -39,8 +39,8 @@ public class RobotContainer {
     //Configure the trigger bindings
     configureBindings();
     m_driveTrain.setDefaultCommand(m_driveTrain.TeleopDrive(() -> -m_tempStick.getRawAxis(IOConstants.xAxis), 
-                                                            () -> m_tempStick.getRawAxis(IOConstants.yAxis),
-                                                            () -> m_tempStick.getRawAxis(IOConstants.omegaAxis)));
+                                                            () -> -m_tempStick.getRawAxis(IOConstants.yAxis),
+                                                            () -> -m_tempStick.getRawAxis(IOConstants.omegaAxis)));
   }
 
   /**

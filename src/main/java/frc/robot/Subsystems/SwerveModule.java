@@ -33,7 +33,7 @@ public class SwerveModule {
 
   private final CANcoder m_absoluteEncoder;
 
-  private double absoluteEncoderOffset;
+  private double absoluteEncoderOffset = 0;
   private final boolean driveInverted, turnReversed, absReversed;
   
   private final SlewRateLimiter DriveAccelLimiter;

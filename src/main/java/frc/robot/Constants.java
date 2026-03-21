@@ -74,7 +74,7 @@ public final class Constants {
 
   /* Constants related to how the DriveTrain moves */
   public static final class DriveConstants {
-    public static final double speedScaler = 1;
+    public static final double speedScaler = .25;
 
     public static final double maxSpeedMetersPerSecond = 5;
     public static final double maxAccelerationMetersPerSecondSquared = 4;
@@ -82,7 +82,7 @@ public final class Constants {
     public static final double maxRotationAccelerationRadiansPerSecondSquared = 2 * maxRotationSpeedRadiansPerSecond;
 
     public static final double translationalDeadband = .15;
-    public static final double rotationalDeadband = .5;
+    public static final double rotationalDeadband = .3;
 
     public static final double jerkCrashTheshold = maxAccelerationMetersPerSecondSquared * Math.sqrt(2);
     public static final double crashDebounceTime = .1;
@@ -125,10 +125,10 @@ public final class Constants {
     public static final boolean backRightAbsReversed = false;
 
     /** Offsets */
-    public static final double frontLeftAbsoluteEncoderOffset = -167.78;  
-    public static final double frontRightAbsoluteEncoderOffset = 41.83;
-    public static final double backLeftAbsoluteEncoderOffset = -134.47;
-    public static final double backRightAbsoluteEncoderOffset = 13.53;
+    public static final double frontLeftAbsoluteEncoderOffset = -166.35;  
+    public static final double frontRightAbsoluteEncoderOffset = 47.28;
+    public static final double backLeftAbsoluteEncoderOffset = -134.73;
+    public static final double backRightAbsoluteEncoderOffset = 12.74;
 
     /** Full Module */
     public static final double maxModuleSpeedMetersPerSecond = 5; //5.614416 True max

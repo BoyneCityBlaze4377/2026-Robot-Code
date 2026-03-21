@@ -21,6 +21,7 @@ import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -171,7 +172,7 @@ public class Shooter extends SubsystemBase {
     SmartDashboard.putNumber("HoodPos", getHoodPos());
 
     //aimTurret(Rotation2d.fromDegrees(0));
-    revFlywheel();
+    //revFlywheel();
   }
 
   public void configMotorDefaults() {
@@ -293,15 +294,16 @@ public class Shooter extends SubsystemBase {
   }
 
   public void angleHood(Rotation2d desiredAngle) {
-    double target = desiredAngle.getDegrees();
+    double target = 90 - desiredAngle.getDegrees();
 
     m_hood.set(m_hoodController.calculate(getHoodPos(), target));
   }
 
   public void aimAt(Pose3d targetPose) {
-    double flyWheelVelocity = 10; //m_flywheelEncoder.getVelocity();
-    double horizDistance = 5; //targetPose.getX() - currentPosition.getX();
-    double vertDistance = 2; //targetPose.getZ() - currentPosition3D.getZ();
+    targetPose = new Pose3d(0, 0, 0, new Rotation3d());
+    double flyWheelVelocity = 5; //m_flywheelEncoder.getVelocity();
+    double horizDistance = targetPose.getX() - currentPosition.getX();
+    double vertDistance = targetPose.getZ() - currentPosition3D.getZ();
 
     double a = -4.9 * Math.pow(horizDistance / flyWheelVelocity, 2);
     double b = horizDistance;
@@ -312,7 +314,7 @@ public class Shooter extends SubsystemBase {
     double quadFormSolution = (-b - Math.sqrt(Math.pow(b, 2) - 4 * a * c)) / (2 * a);
     SmartDashboard.putNumber("QFS", quadFormSolution);
 
-    hoodAngle = Rotation2d.fromRadians(Math.atan(quadFormSolution));
+    //hoodAngle = Rotation2d.fromRadians(Math.atan(quadFormSolution));
     SmartDashboard.putNumber("hood angle", hoodAngle.getDegrees());
 
     double t = horizDistance / (flyWheelVelocity * hoodAngle.getCos());
