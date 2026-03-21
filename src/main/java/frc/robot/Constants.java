@@ -51,7 +51,7 @@ public final class Constants {
     //Driving Axes
     public static final int xAxis = 1;
     public static final int yAxis = 0;
-    public static final int omegaAxis = 4;
+    public static final int omegaAxis = 2;
   }
 
   /* Physical constants of the DriveTrain */
@@ -125,10 +125,10 @@ public final class Constants {
     public static final boolean backRightAbsReversed = false;
 
     /** Offsets */
-    public static final double frontLeftAbsoluteEncoderOffset = -167.78;  
-    public static final double frontRightAbsoluteEncoderOffset = 41.83;
-    public static final double backLeftAbsoluteEncoderOffset = -134.47;
-    public static final double backRightAbsoluteEncoderOffset = 13.53;
+    public static final double frontLeftAbsoluteEncoderOffset = -168.22;  
+    public static final double frontRightAbsoluteEncoderOffset = 44.29;
+    public static final double backLeftAbsoluteEncoderOffset = -136.66;
+    public static final double backRightAbsoluteEncoderOffset = 13.09;
 
     /** Full Module */
     public static final double maxModuleSpeedMetersPerSecond = 5; //5.614416 True max
@@ -330,8 +330,8 @@ public final class Constants {
     public static final double PPturnkI = .355;//.355
     public static final double PPturnkD = 0;
 
-    public static final AdvancedPose2D turretOffsetCoordinates = new AdvancedPose2D();
-    public static final Vector3D turretOffsetPos = new Vector3D();
+    public static final AdvancedPose2D turretOffsetCoordinates = new AdvancedPose2D(.5, .5);
+    public static final Vector3D turretOffsetPos = new Vector3D(.5, .5, .2);
 
     public static final double dotProductThreshold = .25;
 

@@ -41,7 +41,7 @@ public class Vector3D {
                                                   Vector3D offsetFromAxis,
                                                   Vector3D angularVelocity) {
     
-        return offsetFromAxis.getCrossProduct(angularVelocity).plus(translationVelocity);
+        return offsetFromAxis.getCrossProduct(angularVelocity);//.plus(translationVelocity);
     }
 
     public static double getDotProduct(Vector3D a, Vector3D b) {
@@ -50,7 +50,7 @@ public class Vector3D {
 
     public static Vector3D getCrossProduct(Vector3D a, Vector3D b) {
         return new Vector3D(a.getY() * b.getZ() - a.getZ() * b.getY(),
-                            -(a.getX() * b.getZ() - a.getZ() * b.getX()),
+                            a.getZ() * b.getX() - a.getX() * b.getZ(),
                             a.getX() * b.getY() - a.getY() * b.getX());
     }
 

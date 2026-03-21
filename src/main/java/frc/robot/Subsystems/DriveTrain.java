@@ -81,7 +81,7 @@ public class DriveTrain extends SubsystemBase {
 
   private DriveTrainZoneState currentZone = DriveTrainZoneState.AllianceZone;
 
-  private AdvancedPose2D initialPose = new AdvancedPose2D(), lastPose;
+  private AdvancedPose2D initialPose = new AdvancedPose2D(3, 3, 90), lastPose;
   private ChassisSpeeds currentSpeeds = new ChassisSpeeds();
 
   private boolean fieldOrientation = true, isBrake = true, autonInRange = false, notified = false, 
