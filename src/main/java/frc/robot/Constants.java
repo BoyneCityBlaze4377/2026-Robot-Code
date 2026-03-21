@@ -51,7 +51,7 @@ public final class Constants {
     //Driving Axes
     public static final int xAxis = 1;
     public static final int yAxis = 0;
-    public static final int omegaAxis = 4;
+    public static final int omegaAxis = 2;
   }
 
   /* Physical constants of the DriveTrain */
@@ -330,8 +330,8 @@ public final class Constants {
     public static final double PPturnkI = .355;//.355
     public static final double PPturnkD = 0;
 
-    public static final AdvancedPose2D turretOffsetCoordinates = new AdvancedPose2D();
-    public static final Vector3D turretOffsetPos = new Vector3D();
+    public static final AdvancedPose2D turretOffsetCoordinates = new AdvancedPose2D(.5, .5);
+    public static final Vector3D turretOffsetPos = new Vector3D(.5, .5, .2);
 
     public static final double dotProductThreshold = .25;
 

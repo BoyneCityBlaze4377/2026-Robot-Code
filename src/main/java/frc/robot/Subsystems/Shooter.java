@@ -13,6 +13,7 @@ import com.revrobotics.spark.SparkFlex;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
+
 import com.revrobotics.spark.config.SparkFlexConfig;
 import com.revrobotics.spark.config.SparkMaxConfig;
 
@@ -22,7 +23,12 @@ import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Rotation3d;
+import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.math.trajectory.Trajectory;
+import edu.wpi.first.math.trajectory.Trajectory.State;
+import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -30,6 +36,7 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.Lib.AdvancedPose2D;
 import frc.Lib.BlazeMath;
 import frc.Lib.Vector3D;
+import frc.robot.Constants.AutoAimConstants;
 import frc.robot.Constants.FieldConstants;
 import frc.robot.Constants.ShooterConstants;
 import frc.robot.Subsystems.DriveTrain.DriveTrainZoneState;
@@ -45,6 +52,8 @@ public class Shooter extends SubsystemBase {
   private final SparkMaxConfig m_spindexerConfig, m_indexerConfig;
 
   private final RelativeEncoder m_flywheelEncoder;
+
+  private final Field2d simField;
 
   private final PIDController m_bigMoveAimingController, m_fineTuneAimingController, m_hoodController;
   private final SparkClosedLoopController m_velocityController;
@@ -119,55 +128,61 @@ public class Shooter extends SubsystemBase {
     //m_turret.setPosition(0);
     hoodAngle = Rotation2d.fromDegrees(m_hood.getPosition().getValueAsDouble() * ShooterConstants.hoodConversionFactor);
     turretAngle = Rotation2d.fromDegrees(m_turret.getPosition().getValueAsDouble() * ShooterConstants.aimingConversionFactor);
+
+    simField = new Field2d();
   }
 
   @Override
   public void periodic() {
     // This method will be called once per scheduler run
-    // driveTrainPos = m_driveTrainPositionSupplier.get();
-    // driveTrainSpeeds = m_driveTrainVelocitySupplier.get();
-    // driveTrainOmega = m_driveTrainAngularVelocitySupplier.get();
-    // currentZone = m_driveTrainZoneStateSupplier.get();
+    driveTrainPos = m_driveTrainPositionSupplier.get();
+    driveTrainSpeeds = m_driveTrainVelocitySupplier.get();
+    driveTrainOmega = m_driveTrainAngularVelocitySupplier.get();
+    currentZone = m_driveTrainZoneStateSupplier.get();
 
-    // Vector3D driveTrainVelocityVector = new Vector3D(driveTrainSpeeds.vxMetersPerSecond, driveTrainSpeeds.vyMetersPerSecond);
+    driveTrainSpeeds = new ChassisSpeeds(3, 1, Math.PI/4);
+    driveTrainOmega = new Vector3D(0, 0, -driveTrainSpeeds.omegaRadiansPerSecond);
 
-    // currentPosition = driveTrainPos.withVector(driveTrainPos.getRotation().plus(AutoAimConstants.turretOffsetPos.getXYAngle()), 
-    //                                            AutoAimConstants.turretOffsetCoordinates.getTranslation(), 
-    //                                            new Rotation2d());
-    // currentPosition3D = new Pose3d(currentPosition.getX(), currentPosition.getY(), AutoAimConstants.turretOffsetPos.getZ(), 
-    //                                new Rotation3d());
+    Vector3D driveTrainVelocityVector = new Vector3D(driveTrainSpeeds.vxMetersPerSecond, driveTrainSpeeds.vyMetersPerSecond);
 
-    // Vector3D vectorToTrench = Vector3D.fromPoints(driveTrainPos, driveTrainPos.getClosest(
-    //                                                                       FieldConstants.leftTrench.getMidpoint(), 
-    //                                                                       FieldConstants.rightTrench.getMidpoint()));
-    // canShoot = true;
-    // // !FieldConstants.trenchZone.pointInZone(driveTrainPos) &&
-    // //            vectorToTrench.getDotProduct(driveTrainVelocityVector) < 
-    // //               AutoAimConstants.dotProductThreshold * Math.pow(vectorToTrench.get2DMagnitude(), 2);
+    currentPosition = driveTrainPos.withVector(driveTrainPos.getRotation(), 
+                                               AutoAimConstants.turretOffsetCoordinates.getTranslation(), 
+                                               new Rotation2d());
+    currentPosition3D = new Pose3d(currentPosition.getX(), currentPosition.getY(), AutoAimConstants.turretOffsetPos.getZ(), 
+                                   new Rotation3d());
+
+    Vector3D vectorToTrench = Vector3D.fromPoints(driveTrainPos, driveTrainPos.getClosest(
+                                                                          FieldConstants.leftTrench.getMidpoint(), 
+                                                                          FieldConstants.rightTrench.getMidpoint()));
+    canShoot = true;
+    // !FieldConstants.trenchZone.pointInZone(driveTrainPos) &&
+    //            vectorToTrench.getDotProduct(driveTrainVelocityVector) < 
+    //               AutoAimConstants.dotProductThreshold * Math.pow(vectorToTrench.get2DMagnitude(), 2);
     
-    // currentVelocity = Vector3D.getPointVelocity(new Vector3D(driveTrainSpeeds.vxMetersPerSecond, 
-    //                                                          driveTrainSpeeds.vyMetersPerSecond), 
-    //                                             new Vector3D(AutoAimConstants.turretOffsetCoordinates), 
-    //                                             driveTrainOmega);                     
+    Vector3D currentVelocity2D = Vector3D.getPointVelocity(new Vector3D(driveTrainSpeeds.vxMetersPerSecond, 
+                                                             driveTrainSpeeds.vyMetersPerSecond), 
+                                                new Vector3D(currentPosition), 
+                                                driveTrainOmega);   
+                                                
+    currentVelocity = new Vector3D(new AdvancedPose2D().withVector(driveTrainPos.getRotation(), 
+        new Translation2d(currentVelocity2D.getX(), currentVelocity2D.getY()), new Rotation2d()));
+                                                
+    Pose3d targetPose = currentZone == DriveTrainZoneState.AllianceZone ? FieldConstants.hubPosition : 
+                          new Pose3d(currentPosition.getClosest(FieldConstants.leftShuttleTarget, 
+                                                                FieldConstants.rightShuttleTarget));
 
-    // Pose3d targetPose = currentZone == DriveTrainZoneState.AllianceZone ? FieldConstants.hubPosition : 
-    //                       new Pose3d(currentPosition.getClosest(FieldConstants.leftShuttleTarget, 
-    //                                                             FieldConstants.rightShuttleTarget));
-    // if (canShoot) {
-    //   revFlywheel();
-    //   aimAt(targetPose);
-    // } else {
-    //   hoodAngle = Rotation2d.fromDegrees(ShooterConstants.minHoodHeight);
-    // }
+    if (canShoot) {
+      revFlywheel();
+      aimAt(targetPose);
+    } else {
+      hoodAngle = Rotation2d.fromDegrees(ShooterConstants.minHoodHeight);
+    }
 
-    // Vector3D turretAimVector = Vector3D.fromPoints(currentPosition3D, targetPose).minus(currentVelocity);
-    // turretAngle = Rotation2d.fromRadians(Math.atan2(turretAimVector.getY(), turretAimVector.getX()));
+    Vector3D turretAimVector = Vector3D.fromPoints(currentPosition3D, targetPose).minus(currentVelocity);
+    turretAngle = Rotation2d.fromRadians(Math.atan2(turretAimVector.getY(), turretAimVector.getX())).plus(driveTrainPos.getRotation());
     //aimTurret(turretAngle);
     // angleHood(hoodAngle);
 
-    //m_flyWheelMotor1.set(.5);
-    //m_spindexer.set(.05);
-    //m_indexer.set(.4);
     SmartDashboard.putNumber("Turret Pos", getTurretPos());
     SmartDashboard.putNumber("HoodPos", getHoodPos());
 

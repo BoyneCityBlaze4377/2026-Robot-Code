@@ -166,4 +166,8 @@ public class AdvancedPose2D extends Pose2d {
     //     return new Vector3D(other.getX() - this.getX(), other.getY() - this.getY(), other.getZ() - this.getZ());
     //     Pose3d k;
     // }
+
+    public AdvancedPose2D plus(AdvancedPose2D other) {
+        return new AdvancedPose2D(this.getX() + other.getX(), this.getY() + other.getY());
+    }
 }
