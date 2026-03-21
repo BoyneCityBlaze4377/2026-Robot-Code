@@ -173,7 +173,7 @@ public class Shooter extends SubsystemBase {
 
     if (canShoot) {
       revFlywheel();
-      aimAt(targetPose);
+      //aimAt(targetPose);
     } else {
       hoodAngle = Rotation2d.fromDegrees(ShooterConstants.minHoodHeight);
     }

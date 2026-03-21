@@ -658,7 +658,7 @@ public class DriveTrain extends SubsystemBase {
   }
 
   public Vector3D getAngularVelocityVector() {
-    return new Vector3D(0, 0, currentSpeeds.omegaRadiansPerSecond);
+    return new Vector3D(0, 0, -currentSpeeds.omegaRadiansPerSecond);
   }
 
   /** @return The unfiltered heading of the robot */

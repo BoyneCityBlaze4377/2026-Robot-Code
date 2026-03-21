@@ -51,7 +51,7 @@ public final class Constants {
     //Driving Axes
     public static final int xAxis = 1;
     public static final int yAxis = 0;
-    public static final int omegaAxis = 2;
+    public static final int omegaAxis = 4;
   }
 
   /* Physical constants of the DriveTrain */
@@ -62,7 +62,7 @@ public final class Constants {
     // Distance between front and back wheels on robot in meters
     public static final double wheelBase = Units.inchesToMeters(20.5); //.9144
 
-    public static final double bumperthickness = 3;
+    public static final double bumperthickness = Units.inchesToMeters(3);
     public static final double robotWidth = Units.inchesToMeters(27.5) + bumperthickness;
     
     public static final SwerveDriveKinematics driveKinematics =
