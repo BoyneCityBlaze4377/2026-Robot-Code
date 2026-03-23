@@ -1,8 +1,15 @@
 package frc.robot.Subsystems;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.DoubleSupplier;
+
+import org.photonvision.EstimatedRobotPose;
+import org.photonvision.PhotonCamera;
+import org.photonvision.PhotonPoseEstimator;
+import org.photonvision.targeting.PhotonPipelineResult;
+import org.photonvision.targeting.PhotonTrackedTarget;
 
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.pathplanner.lib.auto.AutoBuilder;
@@ -13,12 +20,15 @@ import com.studica.frc.AHRS;
 import com.studica.frc.AHRS.NavXComType;
 
 import choreo.trajectory.SwerveSample;
+import edu.wpi.first.apriltag.AprilTagFieldLayout;
+import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
@@ -43,11 +53,11 @@ import frc.Lib.LimelightHelpers.PoseEstimate;
 import frc.Lib.TimedValue;
 import frc.Lib.Vector3D;
 import frc.robot.Constants.AutoAimConstants;
+import frc.robot.Constants.AutonConstants;
 import frc.robot.Constants.DriveConstants;
 import frc.robot.Constants.FieldConstants;
 import frc.robot.Constants.IOConstants;
 import frc.robot.Constants.ModuleConstants;
-import frc.robot.Constants.PathPlaner;
 import frc.robot.Constants.SensorConstants;
 import frc.robot.Constants.SwerveConstants;
 import frc.robot.Robot;
@@ -61,6 +71,8 @@ public class DriveTrain extends SubsystemBase {
   private final SwerveDrivePoseEstimator poseEstimator;
   private final Field2d estimateField;
 
+  private RobotConfig pathPlannerConfig = AutonConstants.robotConfig;
+
   private final GenericEntry robotHeading, xSpeedSender, ySpeedSender, omegaSender, matchTime, atDesPose, orientationSender;
 
   private final PIDController xController = new PIDController(AutoAimConstants.transkP,
@@ -73,11 +85,21 @@ public class DriveTrain extends SubsystemBase {
                                                                     AutoAimConstants.turnkI,
                                                                     AutoAimConstants.turnkD);
 
+  private final String limeLightName = SensorConstants.limeLightName;
+
+  private final AprilTagFieldLayout tagLayout = AprilTagFieldLayout.loadField(AprilTagFields.k2026RebuiltWelded);
+
+  private final PhotonCamera m_frontCam = new PhotonCamera(SensorConstants.frontCameraName);
+  private final PhotonCamera m_sideCam = new PhotonCamera(SensorConstants.frontCameraName);
+
+  private final PhotonPoseEstimator m_frontEstimator = new PhotonPoseEstimator(tagLayout, SensorConstants.frontCamRobotToCam);
+  private final PhotonPoseEstimator m_sideEstimtor = new PhotonPoseEstimator(tagLayout, SensorConstants.sideCamRobotToCam);
+
+  private Optional<EstimatedRobotPose> frontCamEstPos = Optional.empty(), sideCamEstPos = Optional.empty();
+
   private TimedValue lastAccel;
 
   private final Debouncer crashDetectDebouncer = new Debouncer(DriveConstants.crashDebounceTime);
-
-  private final String cameraName;
 
   private DriveTrainZoneState currentZone = DriveTrainZoneState.AllianceZone;
 
@@ -227,13 +249,22 @@ public class DriveTrain extends SubsystemBase {
     headingController.enableContinuousInput(-Math.PI, Math.PI);
 
     /* LimeLight Initialization */
-    cameraName = "limelight";
-
-    LimelightHelpers.SetRobotOrientation(cameraName, initialPose.getRotation().getDegrees(), 
+    LimelightHelpers.SetRobotOrientation(limeLightName, initialPose.getRotation().getDegrees(), 
                                          0, 0, 0, 0, 0);
 
-    // NetworkTableInstance.getDefault().getTable("limelight").getEntry("camera_robotspace_set")
-    //                 .setDoubleArray(SensorConstants.limelightRobotSpacePose);
+    NetworkTableInstance.getDefault().getTable("limelight").getEntry("camera_robotspace_set")
+                    .setDoubleArray(SensorConstants.limelightRobotSpacePose);
+
+    /* PhotonVision Initialization */
+    PhotonPipelineResult FCResult = m_frontCam.getLatestResult();
+    frontCamEstPos = m_frontEstimator.estimateCoprocMultiTagPose(FCResult);
+    if (frontCamEstPos.isEmpty()) frontCamEstPos = m_frontEstimator.estimateLowestAmbiguityPose(FCResult);
+
+    PhotonPipelineResult SCResult = m_frontCam.getLatestResult();
+    sideCamEstPos = m_frontEstimator.estimateCoprocMultiTagPose(SCResult);
+    if (sideCamEstPos.isEmpty()) sideCamEstPos = m_frontEstimator.estimateLowestAmbiguityPose(SCResult);
+
+    /* Driving variables initialization */
 
     fieldOrientation = true;
 
@@ -249,7 +280,7 @@ public class DriveTrain extends SubsystemBase {
 
     //PathPlanner
     try{
-      PathPlaner.config = RobotConfig.fromGUISettings();
+      pathPlannerConfig = RobotConfig.fromGUISettings();
     } catch (Exception e) {
       // Handle exception as needed
       e.printStackTrace();
@@ -260,9 +291,9 @@ public class DriveTrain extends SubsystemBase {
                           this :: getChassisSpeeds, 
                           this :: chassisSpeedDrive,
                           new PPHolonomicDriveController(
-                            new PIDConstants(AutoAimConstants.PPtranskP,AutoAimConstants.PPtranskI,AutoAimConstants.PPtranskD),
-                            new PIDConstants(AutoAimConstants.PPturnkP, AutoAimConstants.PPturnkI, AutoAimConstants.PPturnkD)), 
-                          PathPlaner.config,
+                            new PIDConstants(AutonConstants.PPtranskP,AutonConstants.PPtranskI,AutonConstants.PPtranskD),
+                            new PIDConstants(AutonConstants.PPturnkP, AutonConstants.PPturnkI, AutonConstants.PPturnkD)), 
+                          pathPlannerConfig,
                           () -> false,
                           this);
   }
@@ -282,12 +313,28 @@ public class DriveTrain extends SubsystemBase {
     heading = MathUtil.inputModulus(m_gyro.getAngle(), -180, 180);
 
     /* Pose Estimation */
-    poseEstimator.update(getHeading(), getSwerveModulePositions());
-    if (getPoseEstimate().get().tagCount >= 1) {
-      poseEstimator.addVisionMeasurement(getPoseEstimate().get().pose, 
-                                         getPoseEstimate().get().timestampSeconds);
-    }
+    //LimeLight
+    Optional<PoseEstimate> LLEstPos = Optional.of(LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(limeLightName));
 
+    //PhotonVision
+    PhotonPipelineResult FCResult = m_frontCam.getLatestResult();
+    frontCamEstPos = m_frontEstimator.estimateCoprocMultiTagPose(FCResult);
+    if (frontCamEstPos.isEmpty()) frontCamEstPos = m_frontEstimator.estimateLowestAmbiguityPose(FCResult);
+
+    PhotonPipelineResult SCResult = m_frontCam.getLatestResult();
+    sideCamEstPos = m_frontEstimator.estimateCoprocMultiTagPose(SCResult);
+    if (sideCamEstPos.isEmpty()) sideCamEstPos = m_frontEstimator.estimateLowestAmbiguityPose(SCResult);
+
+    //Final Updating
+    poseEstimator.update(getHeading(), getSwerveModulePositions());
+    if (LLEstPos.get().tagCount >= 1) {
+      poseEstimator.addVisionMeasurement(LLEstPos.get().pose, 
+                                         LLEstPos.get().timestampSeconds);
+    }
+    if (!frontCamEstPos.isEmpty()) poseEstimator.addVisionMeasurement(frontCamEstPos.get().estimatedPose.toPose2d(), 
+                                                                      frontCamEstPos.get().timestampSeconds);
+    if (!sideCamEstPos.isEmpty()) poseEstimator.addVisionMeasurement(sideCamEstPos.get().estimatedPose.toPose2d(), 
+                                                                     sideCamEstPos.get().timestampSeconds);
     // Field Displaying
     estimateField.setRobotPose(new Pose2d(poseEstimator.getEstimatedPosition().getTranslation(), getHeading()));
 
@@ -315,7 +362,7 @@ public class DriveTrain extends SubsystemBase {
     ta = table.getEntry("ta").getDouble(0);
     tID = table.getEntry("fID").getDouble(0);
 
-    LimelightHelpers.SetRobotOrientation(cameraName, getHeading().getDegrees(), 
+    LimelightHelpers.SetRobotOrientation(limeLightName, getHeading().getDegrees(), 
                                          0, 0, 0, 0, 0);
     
     // Update random stuff
@@ -344,7 +391,7 @@ public class DriveTrain extends SubsystemBase {
     lastPose = new AdvancedPose2D(getPose());
 
     if (hasCrashed && lastAccel.getValue() < .01) {
-      setToVisionPos();
+      //setToVisionPos();
       hasCrashed = false;
     }
 
@@ -599,6 +646,35 @@ public class DriveTrain extends SubsystemBase {
     m_backRight.setNeutralMode(mode);
   }
 
+  public AdvancedPose2D getTargetFuelMeanPos() {
+    PhotonPipelineResult result = m_frontCam.getLatestResult();
+    List<PhotonTrackedTarget> targets;
+    AdvancedPose2D targetMeanPos = new AdvancedPose2D();
+
+    if (result.hasTargets()) {
+      targets = result.getTargets();
+      double totalX = 0;
+      double totalY = 0;
+
+
+      for (PhotonTrackedTarget t : targets) {
+        totalX += t.getBestCameraToTarget().getX();
+        totalY += t.getBestCameraToTarget().getY();
+        
+      }
+      // Potentially change to median rather than mean
+      targetMeanPos = new AdvancedPose2D(totalX / targets.size(), totalY / targets.size());
+    }
+
+    return targetMeanPos;
+  }
+
+  public void driveToTargetFuel() {
+    AdvancedPose2D targetPos = getTargetFuelMeanPos().plus(getAdvancedPose());
+
+    omega = headingController.calculate(getHeading().getDegrees(), targetPos.getRotation().getDegrees());
+  }
+
   /** Stops drive motors for all modules */
   public void stop() {
     x = 0;
@@ -710,15 +786,6 @@ public class DriveTrain extends SubsystemBase {
     autonInRange = isInRange;
   }
 
-  /**
-   * Get the Vision Estimated Position of the robot
-   * 
-   * @return The Vision Estimated Position of the Robot
-   */
-  public Optional<PoseEstimate> getPoseEstimate() {
-    return Optional.of(LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(cameraName));
-  }
-
   public double getTX() {
     return tx;
   }
@@ -746,12 +813,6 @@ public class DriveTrain extends SubsystemBase {
 
   public void resetPose() {
     poseEstimator.resetPose(initialPose);
-  }
-
-  public void setToVisionPos() {
-    if (getPoseEstimate().get().tagCount >= 1) {
-      poseEstimator.resetTranslation(getPoseEstimate().get().pose.getTranslation());
-    }
   }
 
   //choreo

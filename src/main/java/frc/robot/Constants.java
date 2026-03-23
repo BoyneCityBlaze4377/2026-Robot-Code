@@ -9,11 +9,15 @@ import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.Vector;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation3d;
+import edu.wpi.first.math.geometry.Transform2d;
+import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.trajectory.TrapezoidProfile.Constraints;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.units.Unit;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 import frc.Lib.AdvancedPose2D;
@@ -323,17 +327,12 @@ public final class Constants {
     public static final double turnkD = 0; //0
     public static final double turnkTolerance = .03;
 
-    //PathPlanner use
-    public static final double PPtranskP = 2;//2
-    public static final double PPtranskI = 0;
-    public static final double PPtranskD = 0;
+    private final static double turretPosX = -Units.inchesToMeters(3 + 3/4); //Right positive
+    private final static double turretPosY = Units.inchesToMeters(6 + 1/4); //Front positive
+    private final static double turretPosZ = Units.inchesToMeters(17); //Up positive
 
-    public static final double PPturnkP = 4.5;//4.5
-    public static final double PPturnkI = .355;//.355
-    public static final double PPturnkD = 0;
-
-    public static final AdvancedPose2D turretOffsetCoordinates = new AdvancedPose2D(.5, .5);
-    public static final Vector3D turretOffsetPos = new Vector3D(.5, .5, .2);
+    public static final AdvancedPose2D turretOffsetCoordinates = new AdvancedPose2D(turretPosX, turretPosY);
+    public static final Vector3D turretOffsetPos = new Vector3D(turretPosX, turretPosY, turretPosZ);
 
     public static final double dotProductThreshold = .25;
 
@@ -342,14 +341,53 @@ public final class Constants {
     public static final Vector<N3> poseEstimateCrashVisionStdDev = VecBuilder.fill(.02, .02, Units.degreesToRadians(2));
   }
 
-  public class AutonConstants {}
+  public class AutonConstants {
+    public static RobotConfig robotConfig;
+
+    public static final double PPtranskP = 2;//2
+    public static final double PPtranskI = 0;
+    public static final double PPtranskD = 0;
+
+    public static final double PPturnkP = 4.5;//4.5
+    public static final double PPturnkI = .355;//.355
+    public static final double PPturnkD = 0;
+  }
 
   public class SensorConstants {
     /** LIMELIGHT */
     public static final String limeLightName = "limelight";
-  }
 
-  public class PathPlaner {
-    public static RobotConfig config;
+    private static final double LLforward = -Units.inchesToMeters(13 + 7/8);  // meters, forward from robot center
+    private static final double LLside = Units.inchesToMeters(10 + 1/4);      // meters, left of robot center
+    private static final double LLup = Units.inchesToMeters(19 + 1/4);        // meters, up from robot center
+    private static final double LLroll = 0.0;                                 // degrees
+    private static final double LLpitch = 0.0;                                // degrees
+    private static final double LLyaw = 180;                                  // degrees
+
+    public static final double[] limelightRobotSpacePose = {LLforward, LLside, LLup, LLroll, LLpitch, LLyaw};
+
+    /** PHOTONVISION */
+    public static final String frontCameraName = "frontCam";
+    public static final String sideCameraName = "sideCam";
+
+    private static final double FCforward = 0;  // meters, forward from robot center
+    private static final double FCside = 0;      // meters, right of robot center
+    private static final double FCup = 0;        // meters, up from robot center
+    private static final double FCroll = 0.0;                                 // radians
+    private static final double FCpitch = 0.0;                                // radians
+    private static final double FCyaw = 0;                                  // radians
+
+    private static final double SCforward = 0;  // meters, forward from robot center
+    private static final double SCside = 0;      // meters, rigt of robot center
+    private static final double SCup = 0;        // meters, up from robot center
+    private static final double SCroll = 0.0;                                 // radians
+    private static final double SCpitch = 0.0;                                // radians
+    private static final double SCyaw = Math.PI/2;                                  // radians
+
+    public static final Transform3d frontCamRobotToCam = new Transform3d(new Translation3d(FCforward, FCside, FCup), 
+                                                                         new Rotation3d(FCroll, FCpitch, FCyaw));
+    public static final Transform3d sideCamRobotToCam = new Transform3d(new Translation3d(SCforward, SCside, SCup), 
+                                                                         new Rotation3d(SCroll, SCpitch, SCyaw));
+    
   }
 }
