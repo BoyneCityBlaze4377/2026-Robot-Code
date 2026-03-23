@@ -9,7 +9,10 @@ import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.Vector;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation3d;
+import edu.wpi.first.math.geometry.Transform2d;
+import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.trajectory.TrapezoidProfile.Constraints;
@@ -352,13 +355,37 @@ public final class Constants {
     /** LIMELIGHT */
     public static final String limeLightName = "limelight";
 
-    private static final double forward = -Units.inchesToMeters(13 + 7/8);  // meters, forward from robot center
-    private static final double side = Units.inchesToMeters(10 + 1/4);      // meters, left of robot center
-    private static final double up = Units.inchesToMeters(19 + 1/4);        // meters, up from robot center
-    private static final double roll = 0.0;                                 // degrees
-    private static final double pitch = 0.0;                                // degrees
-    private static final double yaw = 180;                                  // degrees
+    private static final double LLforward = -Units.inchesToMeters(13 + 7/8);  // meters, forward from robot center
+    private static final double LLside = Units.inchesToMeters(10 + 1/4);      // meters, left of robot center
+    private static final double LLup = Units.inchesToMeters(19 + 1/4);        // meters, up from robot center
+    private static final double LLroll = 0.0;                                 // degrees
+    private static final double LLpitch = 0.0;                                // degrees
+    private static final double LLyaw = 180;                                  // degrees
 
-    public static final double[] limelightRobotSpacePose = {forward, side, up, roll, pitch, yaw};
+    public static final double[] limelightRobotSpacePose = {LLforward, LLside, LLup, LLroll, LLpitch, LLyaw};
+
+    /** PHOTONVISION */
+    public static final String frontCameraName = "frontCam";
+    public static final String sideCameraName = "sideCam";
+
+    private static final double FCforward = 0;  // meters, forward from robot center
+    private static final double FCside = 0;      // meters, right of robot center
+    private static final double FCup = 0;        // meters, up from robot center
+    private static final double FCroll = 0.0;                                 // radians
+    private static final double FCpitch = 0.0;                                // radians
+    private static final double FCyaw = 0;                                  // radians
+
+    private static final double SCforward = 0;  // meters, forward from robot center
+    private static final double SCside = 0;      // meters, rigt of robot center
+    private static final double SCup = 0;        // meters, up from robot center
+    private static final double SCroll = 0.0;                                 // radians
+    private static final double SCpitch = 0.0;                                // radians
+    private static final double SCyaw = Math.PI/2;                                  // radians
+
+    public static final Transform3d frontCamRobotToCam = new Transform3d(new Translation3d(FCforward, FCside, FCup), 
+                                                                         new Rotation3d(FCroll, FCpitch, FCyaw));
+    public static final Transform3d sideCamRobotToCam = new Transform3d(new Translation3d(SCforward, SCside, SCup), 
+                                                                         new Rotation3d(SCroll, SCpitch, SCyaw));
+    
   }
 }
