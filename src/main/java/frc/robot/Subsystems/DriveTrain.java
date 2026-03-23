@@ -43,11 +43,11 @@ import frc.Lib.LimelightHelpers.PoseEstimate;
 import frc.Lib.TimedValue;
 import frc.Lib.Vector3D;
 import frc.robot.Constants.AutoAimConstants;
+import frc.robot.Constants.AutonConstants;
 import frc.robot.Constants.DriveConstants;
 import frc.robot.Constants.FieldConstants;
 import frc.robot.Constants.IOConstants;
 import frc.robot.Constants.ModuleConstants;
-import frc.robot.Constants.PathPlaner;
 import frc.robot.Constants.SensorConstants;
 import frc.robot.Constants.SwerveConstants;
 import frc.robot.Robot;
@@ -60,6 +60,8 @@ public class DriveTrain extends SubsystemBase {
 
   private final SwerveDrivePoseEstimator poseEstimator;
   private final Field2d estimateField;
+
+  private RobotConfig pathPlannerConfig = AutonConstants.robotConfig;
 
   private final GenericEntry robotHeading, xSpeedSender, ySpeedSender, omegaSender, matchTime, atDesPose, orientationSender;
 
@@ -232,8 +234,8 @@ public class DriveTrain extends SubsystemBase {
     LimelightHelpers.SetRobotOrientation(cameraName, initialPose.getRotation().getDegrees(), 
                                          0, 0, 0, 0, 0);
 
-    // NetworkTableInstance.getDefault().getTable("limelight").getEntry("camera_robotspace_set")
-    //                 .setDoubleArray(SensorConstants.limelightRobotSpacePose);
+    NetworkTableInstance.getDefault().getTable("limelight").getEntry("camera_robotspace_set")
+                    .setDoubleArray(SensorConstants.limelightRobotSpacePose);
 
     fieldOrientation = true;
 
@@ -249,7 +251,7 @@ public class DriveTrain extends SubsystemBase {
 
     //PathPlaner
     try{
-      PathPlaner.config = RobotConfig.fromGUISettings();
+      pathPlannerConfig = RobotConfig.fromGUISettings();
     } catch (Exception e) {
       // Handle exception as needed
       e.printStackTrace();
@@ -260,9 +262,9 @@ public class DriveTrain extends SubsystemBase {
                           this :: getChassisSpeeds, 
                           this :: chassisSpeedDrive,
                           new PPHolonomicDriveController(
-                            new PIDConstants(AutoAimConstants.PPtranskP,AutoAimConstants.PPtranskI,AutoAimConstants.PPtranskD),
-                            new PIDConstants(AutoAimConstants.PPturnkP, AutoAimConstants.PPturnkI, AutoAimConstants.PPturnkD)), 
-                          PathPlaner.config,
+                            new PIDConstants(AutonConstants.PPtranskP,AutonConstants.PPtranskI,AutonConstants.PPtranskD),
+                            new PIDConstants(AutonConstants.PPturnkP, AutonConstants.PPturnkI, AutonConstants.PPturnkD)), 
+                          pathPlannerConfig,
                           () -> false,
                           this);
   }

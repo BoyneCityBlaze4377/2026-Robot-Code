@@ -14,6 +14,7 @@ import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.trajectory.TrapezoidProfile.Constraints;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.units.Unit;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 import frc.Lib.AdvancedPose2D;
@@ -321,17 +322,12 @@ public final class Constants {
     public static final double turnkD = 0; //0
     public static final double turnkTolerance = .03;
 
-    //PathPlanner use
-    public static final double PPtranskP = 2;//2
-    public static final double PPtranskI = 0;
-    public static final double PPtranskD = 0;
+    private final static double turretPosX = -Units.inchesToMeters(3 + 3/4); //Right positive
+    private final static double turretPosY = Units.inchesToMeters(6 + 1/4); //Front positive
+    private final static double turretPosZ = Units.inchesToMeters(17); //Up positive
 
-    public static final double PPturnkP = 4.5;//4.5
-    public static final double PPturnkI = .355;//.355
-    public static final double PPturnkD = 0;
-
-    public static final AdvancedPose2D turretOffsetCoordinates = new AdvancedPose2D(.5, .5);
-    public static final Vector3D turretOffsetPos = new Vector3D(.5, .5, .2);
+    public static final AdvancedPose2D turretOffsetCoordinates = new AdvancedPose2D(turretPosX, turretPosY);
+    public static final Vector3D turretOffsetPos = new Vector3D(turretPosX, turretPosY, turretPosZ);
 
     public static final double dotProductThreshold = .25;
 
@@ -340,14 +336,29 @@ public final class Constants {
     public static final Vector<N3> poseEstimateCrashVisionStdDev = VecBuilder.fill(.02, .02, Units.degreesToRadians(2));
   }
 
-  public class AutonConstants {}
+  public class AutonConstants {
+    public static RobotConfig robotConfig;
+
+    public static final double PPtranskP = 2;//2
+    public static final double PPtranskI = 0;
+    public static final double PPtranskD = 0;
+
+    public static final double PPturnkP = 4.5;//4.5
+    public static final double PPturnkI = .355;//.355
+    public static final double PPturnkD = 0;
+  }
 
   public class SensorConstants {
     /** LIMELIGHT */
     public static final String limeLightName = "limelight";
-  }
 
-  public class PathPlaner {
-    public static RobotConfig config;
+    private static final double forward = -Units.inchesToMeters(13 + 7/8);  // meters, forward from robot center
+    private static final double side = Units.inchesToMeters(10 + 1/4);      // meters, left of robot center
+    private static final double up = Units.inchesToMeters(19 + 1/4);        // meters, up from robot center
+    private static final double roll = 0.0;                                 // degrees
+    private static final double pitch = 0.0;                                // degrees
+    private static final double yaw = 180;                                  // degrees
+
+    public static final double[] limelightRobotSpacePose = {forward, side, up, roll, pitch, yaw};
   }
 }
