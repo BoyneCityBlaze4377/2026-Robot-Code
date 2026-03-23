@@ -52,7 +52,7 @@ public class Collector extends SubsystemBase {
   @Override
   public void periodic() {
     // This method will be called once per scheduler run
-    moveCollector();
+    // moveCollector();
     SmartDashboard.putNumber("DeployMotor Pos", m_deployMotor.getPosition().getValueAsDouble() 
     * CollectorConstants.deployConversionFactor);
     SmartDashboard.putNumber("DeploySP", getCollectorPos());

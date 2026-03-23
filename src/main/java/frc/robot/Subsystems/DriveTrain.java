@@ -81,7 +81,7 @@ public class DriveTrain extends SubsystemBase {
 
   private DriveTrainZoneState currentZone = DriveTrainZoneState.AllianceZone;
 
-  private AdvancedPose2D initialPose = new AdvancedPose2D(3, 3, 90), lastPose;
+  private AdvancedPose2D initialPose = FieldConstants.hubCoordinates.minus(new AdvancedPose2D(SwerveConstants.robotWidth/2, 0)), lastPose;
   private ChassisSpeeds currentSpeeds = new ChassisSpeeds();
 
   private boolean fieldOrientation = true, isBrake = true, autonInRange = false, notified = false, 
@@ -247,7 +247,7 @@ public class DriveTrain extends SubsystemBase {
 
     headingController.enableContinuousInput(-Math.PI, Math.PI);
 
-    //PathPlaner
+    //PathPlanner
     try{
       PathPlaner.config = RobotConfig.fromGUISettings();
     } catch (Exception e) {

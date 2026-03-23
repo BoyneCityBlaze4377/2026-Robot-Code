@@ -62,7 +62,7 @@ public final class Constants {
     // Distance between front and back wheels on robot in meters
     public static final double wheelBase = Units.inchesToMeters(20.5); //.9144
 
-    public static final double bumperthickness = Units.inchesToMeters(3);
+    public static final double bumperthickness = Units.inchesToMeters(0);
     public static final double robotWidth = Units.inchesToMeters(27.5) + bumperthickness;
     
     public static final SwerveDriveKinematics driveKinematics =
@@ -193,16 +193,16 @@ public final class Constants {
     public static final double shooterMaxVoltage = 16;
     public static final double shooterMaxDutyCycle = 1;
 
-    public static final double bigMoveAimingKP = 0.004; //.025
-    public static final double bigMoveAimingKI = 0.00001; //5e-7
-    public static final double bigMoveAimingKD = 0.00; //1
+    public static final double bigMoveAimingKP = 0.006; //.025
+    public static final double bigMoveAimingKI = 0.000008; //5e-7
+    public static final double bigMoveAimingKD = 0.000015; //1
 
     public static final double fineTuneAimingKP = 0.025; //.1
-    public static final double finetuneAimingKI = 0.00000; //5e-7
-    public static final double fineTuneAimingKD = 0.000000; //1
+    public static final double finetuneAimingKI = 0.000001; //5e-7
+    public static final double fineTuneAimingKD = 0.000000001; //1
 
     public static final double aimingKTolerance = .5;
-    public static final double moveTypeThreshold = 15;
+    public static final double moveTypeThreshold = 10;
 
     public static final double maxTurretOutput = .75;
     //public static final Constraints aimingControllerConstraints = new Constraints(0, 0);
@@ -221,6 +221,8 @@ public final class Constants {
 
     public static final double maxHoodHeight = 0;
     public static final double minHoodHeight = 0;
+
+    public static final double turretAngleOffset = 125;
 
     /* Aiming */
     public static final double turretGearRatio = 96 / 25;

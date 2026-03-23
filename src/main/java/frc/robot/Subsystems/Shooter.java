@@ -1,10 +1,12 @@
 package frc.robot.Subsystems;
 
+import java.util.Vector;
 import java.util.function.Supplier;
 
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.FeedbackSensorSourceValue;
+import com.ctre.phoenix6.signals.InvertedValue;
 import com.revrobotics.PersistMode;
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.ResetMode;
@@ -13,21 +15,16 @@ import com.revrobotics.spark.SparkFlex;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
-
 import com.revrobotics.spark.config.SparkFlexConfig;
 import com.revrobotics.spark.config.SparkMaxConfig;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
-import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import edu.wpi.first.math.trajectory.Trajectory;
-import edu.wpi.first.math.trajectory.Trajectory.State;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -108,8 +105,9 @@ public class Shooter extends SubsystemBase {
     m_fineTuneAimingController = new PIDController(ShooterConstants.fineTuneAimingKP, 
                                                    ShooterConstants.finetuneAimingKI, 
                                                    ShooterConstants.fineTuneAimingKD);
-
-    
+                                                   
+    m_bigMoveAimingController.disableContinuousInput();
+    m_fineTuneAimingController.disableContinuousInput();
 
     m_hoodController = new PIDController(ShooterConstants.hoodKP, 
                                          ShooterConstants.hoodKI, 
@@ -125,7 +123,7 @@ public class Shooter extends SubsystemBase {
     configMotorDefaults();
 
     //m_hood.setPosition(0);
-    //m_turret.setPosition(0);
+    // m_turret.setPosition(0);
     hoodAngle = Rotation2d.fromDegrees(m_hood.getPosition().getValueAsDouble() * ShooterConstants.hoodConversionFactor);
     turretAngle = Rotation2d.fromDegrees(m_turret.getPosition().getValueAsDouble() * ShooterConstants.aimingConversionFactor);
 
@@ -140,8 +138,8 @@ public class Shooter extends SubsystemBase {
     driveTrainOmega = m_driveTrainAngularVelocitySupplier.get();
     currentZone = m_driveTrainZoneStateSupplier.get();
 
-    driveTrainSpeeds = new ChassisSpeeds(3, 1, Math.PI/4);
-    driveTrainOmega = new Vector3D(0, 0, -driveTrainSpeeds.omegaRadiansPerSecond);
+    // driveTrainSpeeds = new ChassisSpeeds(3, 1, Math.PI/4);
+    // driveTrainOmega = new Vector3D(0, 0, -driveTrainSpeeds.omegaRadiansPerSecond);
 
     Vector3D driveTrainVelocityVector = new Vector3D(driveTrainSpeeds.vxMetersPerSecond, driveTrainSpeeds.vyMetersPerSecond);
 
@@ -172,21 +170,23 @@ public class Shooter extends SubsystemBase {
                                                                 FieldConstants.rightShuttleTarget));
 
     if (canShoot) {
-      revFlywheel();
+      //revFlywheel();
       //aimAt(targetPose);
     } else {
       hoodAngle = Rotation2d.fromDegrees(ShooterConstants.minHoodHeight);
     }
 
+    // Pose3d targetPose = new Pose3d(5,5,0, new Rotation3d());
     Vector3D turretAimVector = Vector3D.fromPoints(currentPosition3D, targetPose).minus(currentVelocity);
     turretAngle = Rotation2d.fromRadians(Math.atan2(turretAimVector.getY(), turretAimVector.getX())).plus(driveTrainPos.getRotation());
-    //aimTurret(turretAngle);
+    aimTurret(turretAngle);
     // angleHood(hoodAngle);
 
     SmartDashboard.putNumber("Turret Pos", getTurretPos());
     SmartDashboard.putNumber("HoodPos", getHoodPos());
+    SmartDashboard.putNumber("DesTurAngle", turretAngle.getDegrees());
 
-    //aimTurret(Rotation2d.fromDegrees(0));
+    // aimTurret(Rotation2d.fromDegrees(0));
     //revFlywheel();
   }
 
@@ -205,6 +205,8 @@ public class Shooter extends SubsystemBase {
 
     //TurretMotor
     m_turretConfig.Audio.BeepOnBoot = false;
+
+    m_turretConfig.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
 
     m_turretConfig.ClosedLoopGeneral.ContinuousWrap = false;
     m_turretConfig.MotorOutput.NeutralMode = ShooterConstants.turretNeutralModeValue;
@@ -278,7 +280,7 @@ public class Shooter extends SubsystemBase {
   }
 
   public double getTurretPos() {
-    return m_turret.getPosition().getValueAsDouble() * ShooterConstants.aimingConversionFactor;
+    return m_turret.getPosition().getValueAsDouble() * ShooterConstants.aimingConversionFactor + ShooterConstants.turretAngleOffset;
   }
 
   public double getRawTurretPos() {
@@ -295,6 +297,7 @@ public class Shooter extends SubsystemBase {
 
   public void aimTurret(Rotation2d desiredAngle) {
     double target = desiredAngle.getDegrees();
+    target = MathUtil.inputModulus(target, -45, 315);
     m_turret.set(BlazeMath.clampMagnitude(Math.abs(getTurretPos() - target) > ShooterConstants.moveTypeThreshold
                                             ? m_bigMoveAimingController.calculate(getTurretPos(), target) 
                                             : m_fineTuneAimingController.calculate(getTurretPos(), target),
@@ -306,6 +309,8 @@ public class Shooter extends SubsystemBase {
                                             ? m_bigMoveAimingController.calculate(getTurretPos(), target) 
                                             : m_fineTuneAimingController.calculate(getTurretPos(), target)),
                                 ShooterConstants.maxTurretOutput));
+
+    SmartDashboard.putNumber("FilteredDesTurPos", target);
   }
 
   public void angleHood(Rotation2d desiredAngle) {
