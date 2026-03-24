@@ -330,12 +330,12 @@ public class Shooter extends SubsystemBase {
   }
 
   public void aimAt(Pose3d targetPose) {
-    double flyWheelVelocity = Units.rotationsPerMinuteToRadiansPerSecond(m_flywheelEncoder.getVelocity()) 
-                                        * Units.inchesToMeters(2);
+    double flyWheelVelocity = 15;// Units.rotationsPerMinuteToRadiansPerSecond(m_flywheelEncoder.getVelocity()) 
+                                        //* Units.inchesToMeters(2);
 
     SmartDashboard.putNumber("FWV", flyWheelVelocity);
-    double horizDistance = new AdvancedPose2D(targetPose).getDistance(currentPosition);
-    double vertDistance = targetPose.getZ() - currentPosition3D.getZ();
+    double horizDistance = 4;//new AdvancedPose2D(targetPose).getDistance(currentPosition);
+    double vertDistance = 1.5;//targetPose.getZ() - currentPosition3D.getZ();
 
     SmartDashboard.putNumber("Distance", vertDistance);
 
@@ -352,6 +352,7 @@ public class Shooter extends SubsystemBase {
     SmartDashboard.putNumber("hood angle", hoodAngle.getDegrees());
 
     double t = horizDistance / (flyWheelVelocity * hoodAngle.getCos());
+    SmartDashboard.putNumber("t", t);
     SmartDashboard.putNumber("solved y", flyWheelVelocity * hoodAngle.getSin() * t - 4.9 * Math.pow(t, 2));
   }
 
