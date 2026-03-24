@@ -25,6 +25,8 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.math.util.Units;
+import edu.wpi.first.units.Unit;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -122,8 +124,8 @@ public class Shooter extends SubsystemBase {
 
     configMotorDefaults();
 
-    //m_hood.setPosition(0);
-    // m_turret.setPosition(0);
+    m_hood.setPosition(ShooterConstants.minHoodHeight / ShooterConstants.hoodConversionFactor);
+    //m_turret.setPosition(0);
     hoodAngle = Rotation2d.fromDegrees(m_hood.getPosition().getValueAsDouble() * ShooterConstants.hoodConversionFactor);
     turretAngle = Rotation2d.fromDegrees(m_turret.getPosition().getValueAsDouble() * ShooterConstants.aimingConversionFactor);
 
@@ -171,20 +173,24 @@ public class Shooter extends SubsystemBase {
 
     if (canShoot) {
       //revFlywheel();
-      //aimAt(targetPose);
+      aimAt(targetPose);
     } else {
       hoodAngle = Rotation2d.fromDegrees(ShooterConstants.minHoodHeight);
     }
 
     // Pose3d targetPose = new Pose3d(5,5,0, new Rotation3d());
-    Vector3D turretAimVector = Vector3D.fromPoints(currentPosition3D, targetPose).minus(currentVelocity);
-    turretAngle = Rotation2d.fromRadians(Math.atan2(turretAimVector.getY(), turretAimVector.getX())).plus(driveTrainPos.getRotation());
+    Vector3D turretAimVector = Vector3D.fromPoints(currentPosition3D, targetPose);//.minus(currentVelocity);
+    turretAngle = Rotation2d.fromRadians(Math.atan2(turretAimVector.getY(), turretAimVector.getX())).minus(driveTrainPos.getRotation());
     aimTurret(turretAngle);
-    // angleHood(hoodAngle);
+    angleHood(hoodAngle);
 
     SmartDashboard.putNumber("Turret Pos", getTurretPos());
     SmartDashboard.putNumber("HoodPos", getHoodPos());
     SmartDashboard.putNumber("DesTurAngle", turretAngle.getDegrees());
+
+    simField.setRobotPose(driveTrainPos);
+    simField.getObject("Turret Target").setPose(targetPose.toPose2d());
+    SmartDashboard.putData("Shooterfield", simField);
 
     // aimTurret(Rotation2d.fromDegrees(0));
     //revFlywheel();
@@ -244,7 +250,7 @@ public class Shooter extends SubsystemBase {
   }
 
   public void revFlywheel() {
-    double velocity = .4; //ShooterConstants.maxVelocity;
+    double velocity = .7; //ShooterConstants.maxVelocity;
                       // ShooterConstants.minVelocity + 
                       // (ShooterConstants.maxVelocity - ShooterConstants.minVelocity) *
                       // (driveTrainPos.getDistance(FieldConstants.hubCoordinates) / FieldConstants.outpostPos
@@ -296,8 +302,10 @@ public class Shooter extends SubsystemBase {
   }
 
   public void aimTurret(Rotation2d desiredAngle) {
-    double target = desiredAngle.getDegrees();
+    double target = desiredAngle.getDegrees();// - driveTrainPos.getRotation().getDegrees();
+    simField.getObject("TurretPos").setPose(currentPosition.withRotation(Rotation2d.fromDegrees(target)));
     target = MathUtil.inputModulus(target, -45, 315);
+
     m_turret.set(BlazeMath.clampMagnitude(Math.abs(getTurretPos() - target) > ShooterConstants.moveTypeThreshold
                                             ? m_bigMoveAimingController.calculate(getTurretPos(), target) 
                                             : m_fineTuneAimingController.calculate(getTurretPos(), target),
@@ -311,19 +319,25 @@ public class Shooter extends SubsystemBase {
                                 ShooterConstants.maxTurretOutput));
 
     SmartDashboard.putNumber("FilteredDesTurPos", target);
+
   }
 
   public void angleHood(Rotation2d desiredAngle) {
     double target = 90 - desiredAngle.getDegrees();
 
-    m_hood.set(m_hoodController.calculate(getHoodPos(), target));
+    //m_hood.set(m_hoodController.calculate(getHoodPos(), target));
+    SmartDashboard.putNumber("HoodTarget", target);
   }
 
   public void aimAt(Pose3d targetPose) {
-    targetPose = new Pose3d(0, 0, 0, new Rotation3d());
-    double flyWheelVelocity = 5; //m_flywheelEncoder.getVelocity();
-    double horizDistance = targetPose.getX() - currentPosition.getX();
+    double flyWheelVelocity = Units.rotationsPerMinuteToRadiansPerSecond(m_flywheelEncoder.getVelocity()) 
+                                        * Units.inchesToMeters(2);
+
+    SmartDashboard.putNumber("FWV", flyWheelVelocity);
+    double horizDistance = new AdvancedPose2D(targetPose).getDistance(currentPosition);
     double vertDistance = targetPose.getZ() - currentPosition3D.getZ();
+
+    SmartDashboard.putNumber("Distance", vertDistance);
 
     double a = -4.9 * Math.pow(horizDistance / flyWheelVelocity, 2);
     double b = horizDistance;
@@ -334,7 +348,7 @@ public class Shooter extends SubsystemBase {
     double quadFormSolution = (-b - Math.sqrt(Math.pow(b, 2) - 4 * a * c)) / (2 * a);
     SmartDashboard.putNumber("QFS", quadFormSolution);
 
-    //hoodAngle = Rotation2d.fromRadians(Math.atan(quadFormSolution));
+    hoodAngle = Rotation2d.fromRadians(Math.atan(quadFormSolution));
     SmartDashboard.putNumber("hood angle", hoodAngle.getDegrees());
 
     double t = horizDistance / (flyWheelVelocity * hoodAngle.getCos());

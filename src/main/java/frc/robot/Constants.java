@@ -214,7 +214,7 @@ public final class Constants {
     public static final double turretMaxVoltage = 16;
     public static final double turretMaxDutyCycle = 1;
 
-    public static final double hoodKP = 0.008; //.01
+    public static final double hoodKP = 0.015; //.01
     public static final double hoodKI = 0.0;
     public static final double hoodKD = 0.000;
     public static final double hoodKTolerance = .5;
@@ -223,8 +223,8 @@ public final class Constants {
     public static final double hoodMaxVoltage = 16;
     public static final double hoodMaxDutyCycle = 1;
 
-    public static final double maxHoodHeight = 0;
-    public static final double minHoodHeight = 0;
+    public static final double maxHoodHeight = 64.2;
+    public static final double minHoodHeight = 26.7;
 
     public static final double turretAngleOffset = 125;
 
@@ -274,7 +274,7 @@ public final class Constants {
     public static final double climberMaxVoltage = 16;
     public static final double climberMaxDutyCycle = 1;
 
-    public static final double maxHeightPos = 0;
+    public static final double maxHeightPos = -60;
     public static final double minHeightPos = 0;
 
     public static final double climberKP = 0.012;

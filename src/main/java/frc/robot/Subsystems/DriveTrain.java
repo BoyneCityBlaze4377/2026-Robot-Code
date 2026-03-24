@@ -103,7 +103,7 @@ public class DriveTrain extends SubsystemBase {
 
   private DriveTrainZoneState currentZone = DriveTrainZoneState.AllianceZone;
 
-  private AdvancedPose2D initialPose = FieldConstants.hubCoordinates.minus(new AdvancedPose2D(SwerveConstants.robotWidth/2, 0)), lastPose;
+  private AdvancedPose2D initialPose = new AdvancedPose2D(1, 5), lastPose;
   private ChassisSpeeds currentSpeeds = new ChassisSpeeds();
 
   private boolean fieldOrientation = true, isBrake = true, autonInRange = false, notified = false, 

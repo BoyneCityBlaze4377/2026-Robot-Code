@@ -61,8 +61,9 @@ public class RobotContainer {
   //   new JoystickButton(m_driverStick, IOConstants.switchOrientationButtonID).onTrue(SwitchOrientation);
     // new JoystickButton(m_driverStick, IOConstants.robotOrientButtonID).whileTrue(m_driveTrain.RobotOriented());
 
-    // new POVButton(m_tempStick, 0).whileTrue(m_climber.ClimberUp());
-    // new POVButton(m_tempStick, 180).whileTrue(m_climber.ClimberDown());
+    new JoystickButton(m_tempStick, 2).whileTrue(m_climber.ClimberUp());
+    new JoystickButton(m_tempStick, 3).whileTrue(m_climber.ClimberDown());
+    new JoystickButton(m_tempStick, 4).whileTrue(m_climber.TEMPCLIMBDOWNCMD());
   }
 
   /**

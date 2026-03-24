@@ -178,4 +178,8 @@ public class AdvancedPose2D extends Pose2d {
     public AdvancedPose2D minus(AdvancedPose2D other) {
         return new AdvancedPose2D(this.getX() - other.getX(), this.getY() - other.getY());
     } 
+
+    public AdvancedPose2D withRotation(Rotation2d newRotation) {
+        return new AdvancedPose2D(this.getX(), this.getY(), newRotation);
+    }
 }

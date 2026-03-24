@@ -37,7 +37,8 @@ public class Climber extends SubsystemBase {
   @Override
   public void periodic() {
     // This method will be called once per scheduler run
-    //moveClimber();
+    moveClimber();
+    SmartDashboard.putNumber("ClimberPos", m_climberMotor.getPosition().getValueAsDouble());
   }
 
   public void configDefaults() {
@@ -71,11 +72,19 @@ public class Climber extends SubsystemBase {
     climberSpeed = m_climberController.calculate(m_climberMotor.getPosition().getValueAsDouble(), ClimberConstants.minHeightPos);                          
   }
 
+  private void TEMPCLIMBDOWN() {
+    climberSpeed = .1;
+  }
+
   public Command ClimberUp() {
     return Commands.runEnd(() -> this.climberUp(), () -> this.stopClimber(), this);
   }
 
   public Command ClimberDown() {
     return Commands.runEnd(() -> this.climberDown(), () -> this.stopClimber(), this);
+  }
+
+  public Command TEMPCLIMBDOWNCMD() {
+    return Commands.runEnd(() -> this.TEMPCLIMBDOWN(), () -> this.stopClimber(), this);
   }
 }
