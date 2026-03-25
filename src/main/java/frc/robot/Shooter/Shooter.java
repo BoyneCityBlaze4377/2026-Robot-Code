@@ -278,13 +278,17 @@ public class Shooter extends SubsystemBase {
   }
 
   public void revFlywheel() {
-    double velocity = .7; //ShooterConstants.maxVelocity;
+    double velocity = .25; //ShooterConstants.maxVelocity;
                       // ShooterConstants.minVelocity + 
                       // (ShooterConstants.maxVelocity - ShooterConstants.minVelocity) *
                       // (driveTrainPos.getDistance(FieldConstants.hubCoordinates) / FieldConstants.outpostPos
                       //                                                               .getDistance(FieldConstants.hubCoordinates));
 
     genericShoot(velocity + ShooterConstants.velocityAddOn);
+  }
+
+  public double getVelocity() {
+    return Units.rotationsPerMinuteToRadiansPerSecond(m_flywheelEncoder.getVelocity()) * Units.inchesToMeters(2);
   }
 
   private void runSpindexer() {
