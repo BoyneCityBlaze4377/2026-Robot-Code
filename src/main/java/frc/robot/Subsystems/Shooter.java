@@ -181,7 +181,7 @@ public class Shooter extends SubsystemBase {
     // Pose3d targetPose = new Pose3d(5,5,0, new Rotation3d());
     Vector3D turretAimVector = Vector3D.fromPoints(currentPosition3D, targetPose);//.minus(currentVelocity);
     turretAngle = Rotation2d.fromRadians(Math.atan2(turretAimVector.getY(), turretAimVector.getX())).minus(driveTrainPos.getRotation());
-    aimTurret(turretAngle);
+    // aimTurret(turretAngle);
     angleHood(hoodAngle);
 
     SmartDashboard.putNumber("Turret Pos", getTurretPos());
@@ -193,7 +193,9 @@ public class Shooter extends SubsystemBase {
     SmartDashboard.putData("Shooterfield", simField);
 
     // aimTurret(Rotation2d.fromDegrees(0));
-    //revFlywheel();
+    revFlywheel();
+
+    SmartDashboard.putNumber("FWV", getVelocity());
   }
 
   public void configMotorDefaults() {
@@ -250,13 +252,17 @@ public class Shooter extends SubsystemBase {
   }
 
   public void revFlywheel() {
-    double velocity = .7; //ShooterConstants.maxVelocity;
+    double velocity = .25; //ShooterConstants.maxVelocity;
                       // ShooterConstants.minVelocity + 
                       // (ShooterConstants.maxVelocity - ShooterConstants.minVelocity) *
                       // (driveTrainPos.getDistance(FieldConstants.hubCoordinates) / FieldConstants.outpostPos
                       //                                                               .getDistance(FieldConstants.hubCoordinates));
 
     genericShoot(velocity + ShooterConstants.velocityAddOn);
+  }
+
+  public double getVelocity() {
+    return Units.rotationsPerMinuteToRadiansPerSecond(m_flywheelEncoder.getVelocity()) * Units.inchesToMeters(2);
   }
 
   private void runSpindexer() {
