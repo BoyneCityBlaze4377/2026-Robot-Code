@@ -9,6 +9,9 @@ import edu.wpi.first.math.geometry.Translation2d;
 import frc.robot.Constants.FieldConstants;
 
 public class AdvancedPose2D extends Pose2d {
+
+    public static AdvancedPose2D origin = new AdvancedPose2D();
+
     public AdvancedPose2D() {
         super();
     }
@@ -181,5 +184,11 @@ public class AdvancedPose2D extends Pose2d {
 
     public AdvancedPose2D withRotation(Rotation2d newRotation) {
         return new AdvancedPose2D(this.getX(), this.getY(), newRotation);
+    }
+
+    public String toString() {
+        return "AdvancedPose2D(X = " + this.getX() + " meters, Y = " 
+                                     + this.getY() + " meters, Angle = " 
+                                     + this.getHeadingDegrees() + " degrees)";
     }
 }

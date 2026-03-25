@@ -2,6 +2,7 @@ package frc.Lib;
 
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
 
 /** Add your docs here. */
 public class Vector3D {
@@ -19,6 +20,10 @@ public class Vector3D {
 
     public Vector3D(Pose3d components) {
         this(components.getX(), components.getY(), components.getZ());
+    }
+
+    public Vector3D(ChassisSpeeds velocity) {
+        this(velocity.vxMetersPerSecond, velocity.vyMetersPerSecond);
     }
 
     public Vector3D(AdvancedPose2D coordinates) {

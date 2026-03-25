@@ -1,4 +1,4 @@
-package frc.robot.Subsystems;
+package frc.robot.Collector;
 
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.hardware.TalonFX;
@@ -11,6 +11,8 @@ import com.revrobotics.spark.config.SparkMaxConfig;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.filter.Debouncer;
+import edu.wpi.first.math.filter.Debouncer.DebounceType;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -19,6 +21,8 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.CollectorConstants;
 
 public class Collector extends SubsystemBase {
+  public enum CollectorMode {COLLECTING, JOSTLING, RETRACTED};
+
   private final TalonFX m_deployMotor;
   private final SparkMax m_collectorMotor;
 
@@ -27,10 +31,15 @@ public class Collector extends SubsystemBase {
 
   private final PIDController m_deployController;
 
+  public final Debouncer resistanceDebouncer = new Debouncer(CollectorConstants.resistanceDebounceTime, DebounceType.kBoth);
+
   private final Timer m_timer = new Timer();
 
-  private double setpoint, jostleSpeed = 0;
-  private boolean isJostling = false;
+  private double setpoint, jostlePosDiff = 0;
+  private boolean jostlingEnabled = false;
+
+  public CollectorState m_desiredState, m_currentState;
+  public CollectorMode currentMode = CollectorMode.RETRACTED;
 
   /** Creates a new Collector. */
   public Collector() {
@@ -52,10 +61,34 @@ public class Collector extends SubsystemBase {
   @Override
   public void periodic() {
     // This method will be called once per scheduler run
-    // moveCollector();
+
+    switch (currentMode) {
+      case RETRACTED:
+        setDesiredState(CollectorState.fullyRetracted);
+        jostlingEnabled = false;
+        break;
+      case COLLECTING:
+        setDesiredState(CollectorState.collecting);
+        jostlingEnabled = false;
+        break;
+      case JOSTLING:
+        setDesiredState(CollectorState.fullyRetracted);
+        jostlingEnabled = true;
+        break;
+      default:
+        setDesiredState(CollectorState.fullyRetracted);
+        jostlingEnabled = false;
+    }
+
+    setpoint = m_desiredState.position;
+    moveCollector(isResisted(jostlingEnabled));
+    runHarvester(m_desiredState.velocity);
+
     SmartDashboard.putNumber("DeployMotor Pos", m_deployMotor.getPosition().getValueAsDouble() 
     * CollectorConstants.deployConversionFactor);
     SmartDashboard.putNumber("DeploySP", getCollectorPos());
+
+    m_currentState = new CollectorState(getCollectorPos(), m_collectorMotor.get());
   }
 
   public void configMotorDefaults() {
@@ -83,36 +116,52 @@ public class Collector extends SubsystemBase {
     m_deployMotor.getConfigurator().apply(m_deployMotorConfig);
   }
 
-  public void moveCollector() {
-    m_deployMotor.set(MathUtil.clamp(m_deployController.calculate(getCollectorPos(), setpoint), 
-                                     -CollectorConstants.maxDeploySpeed, CollectorConstants.maxDeploySpeed)
-                      + jostleSpeed);
+  public void moveCollector(boolean isResisted) {
+    double PIDSpeed = MathUtil.clamp(m_deployController.calculate(getCollectorPos(), setpoint + jostlePosDiff), 
+                                     -CollectorConstants.maxDeploySpeed, CollectorConstants.maxDeploySpeed);
+    m_deployMotor.set(isResisted ? CollectorConstants.resistanceSpeed * Math.signum(PIDSpeed) : PIDSpeed);
 
     SmartDashboard.putNumber("Deploy Factor", MathUtil.clamp(m_deployController.calculate(getCollectorPos(), setpoint), 
-                                     -CollectorConstants.maxDeploySpeed, CollectorConstants.maxDeploySpeed)
-                      + jostleSpeed);
+                                     -CollectorConstants.maxDeploySpeed, CollectorConstants.maxDeploySpeed));
   }
 
   public double getCollectorPos() {
     return m_deployMotor.getPosition().getValueAsDouble() * CollectorConstants.deployConversionFactor;
   }
 
-  public double getJostleSpeed(double time) {
-    isJostling = true;
-    int intervalID = (int) Math.floor(time / CollectorConstants.jostleInterval) % 2;
-    double timeBasedSpeed = (intervalID < 1e-6 ? CollectorConstants.jostleSpeedDifferential : 
-                                                -CollectorConstants.jostleSpeedDifferential);
-    return (!(CollectorConstants.deployedPos - getPosition() < CollectorConstants.closeToExtendedTolerance) 
-                      ? timeBasedSpeed : -CollectorConstants.jostleSpeedDifferential);
+  // public double getJostleSpeed(double time) {
+  //   isJostling = true;
+  //   int intervalID = (int) Math.floor(time / CollectorConstants.jostleInterval) % 2;
+  //   double timeBasedSpeed = (intervalID < 1e-6 ? CollectorConstants.jostlePositionDifferential : 
+  //                                               -CollectorConstants.jostlePositionDifferential);
+  //   return (!(CollectorConstants.deployedPos - getPosition() < CollectorConstants.closeToExtendedTolerance) 
+  //                     ? timeBasedSpeed : -CollectorConstants.jostlePositionDifferential);
+  // }
+
+  public void setDesiredState(CollectorState desiredState) {
+    m_desiredState = desiredState;
   }
 
-  public void stopJostle() {
-    jostleSpeed = 0;
-    isJostling = false;
+  public CollectorState getCurrentState() {
+    return m_currentState;
+  }
+
+  public boolean isResisted(boolean jostleEnabled) {
+    return jostleEnabled && resistanceDebouncer.calculate(currentMode == CollectorMode.JOSTLING && 
+                                                          m_deployMotor.getVelocity().getValueAsDouble() 
+                                                              <= CollectorConstants.restistanceSpeedthreshold);
+  }
+
+  public void setCurrentMode(CollectorMode newMode) {
+    currentMode = newMode;
   }
 
   public void setSetpoint(double target) {
     setpoint = target;
+  }
+
+  public void runHarvester(double speed) {
+    m_collectorMotor.set(speed);
   }
 
   public void collect() {
@@ -127,31 +176,16 @@ public class Collector extends SubsystemBase {
     return m_deployMotor.getPosition().getValueAsDouble();
   }
 
-  public Command runCollector() {
-    return Commands.runEnd(() -> this.collect(), 
-                           () -> this.stopCollector());
+  public Command SetCollectorMode(CollectorMode mode) {
+    return Commands.runOnce(() -> this.setCurrentMode(mode), this);
   }
 
-  public Command deployCollector() {
-    return Commands.runOnce(() -> this.setSetpoint(CollectorConstants.deployedPos - CollectorConstants.setpointOffset), this);
-  }
-
-  public Command retractCollector() {
-    return Commands.runOnce(() -> this.setSetpoint(CollectorConstants.retractedPos + CollectorConstants.setpointOffset), this);
-  }
-
-  public Command Collect() {
-    return Commands.parallel(this.deployCollector(), this.runCollector() 
-    //, this.Jostle()
-    );
-  }
-
-  public Command Jostle() {
-    return Commands.runEnd(() -> {
-      if (!isJostling) m_timer.restart();
-      jostleSpeed = getJostleSpeed(m_timer.get());
-    }, () -> {
-      stopJostle();
-    });
-  }
+  // public Command Jostle() {
+    // return Commands.runEnd(() -> {
+    //   if (!isJostling) m_timer.restart();
+    //   jostleSpeed = getJostleSpeed(m_timer.get());
+    // }, () -> {
+    //   stopJostle();
+    // });
+  // }
 }

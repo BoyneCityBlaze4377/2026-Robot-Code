@@ -1,24 +1,39 @@
-package frc.robot.Subsystems;
+package frc.robot.Climber;
 
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 
 import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.Lib.AdvancedPose2D;
+import frc.Lib.BlazeMath;
+import frc.Lib.Vector3D;
 import frc.robot.Constants.ClimberConstants;
 import frc.robot.Constants.CollectorConstants;
+import frc.robot.Constants.FieldConstants;
+import frc.robot.Shooter.ShooterMath;
 
 public class Climber extends SubsystemBase {
+  public enum ClimberMode {UP, DOWN, CLIMB};
+
   private final TalonFX m_climberMotor;
   private final TalonFXConfiguration m_climberMotorConfig;
+
+  private double setpoint = ClimberConstants.minHeightPos;
 
   private final PIDController m_climberController;
 
   private double climberSpeed = 0;
+
+  public ClimberMode mode = ClimberMode.DOWN;
+
+  public ClimberState m_desiredState = ClimberState.retracted;
   
   /** Creates a new Climber. */
   public Climber() {
@@ -37,8 +52,28 @@ public class Climber extends SubsystemBase {
   @Override
   public void periodic() {
     // This method will be called once per scheduler run
+    switch (mode) {
+      case UP:
+        setDesiredState(ClimberState.extended);
+        break;
+      case DOWN:
+        setDesiredState(ClimberState.retracted);
+        break;
+      case CLIMB:
+        setDesiredState(ClimberState.climbed);
+        break;
+      default:
+        setDesiredState(ClimberState.retracted);
+        break;
+    }
+
+    setpoint = m_desiredState.position;
     moveClimber();
+    
     SmartDashboard.putNumber("ClimberPos", m_climberMotor.getPosition().getValueAsDouble());
+    SmartDashboard.putString("TestingShot", ShooterMath.calcDesiredState(new AdvancedPose2D(3, 3), 
+        ChassisSpeeds.fromFieldRelativeSpeeds(0, 0, 0, new Rotation2d()), 
+        new Vector3D(), FieldConstants.hubPosition, 6).toString());
   }
 
   public void configDefaults() {
@@ -57,31 +92,35 @@ public class Climber extends SubsystemBase {
   }
 
   private void moveClimber() {
-    m_climberMotor.set(climberSpeed);
+    m_climberMotor.set(m_climberController.calculate(getPos(), setpoint));
   }
 
   private void stopClimber() {
     climberSpeed = 0;
   }
 
-  private void climberUp() {
-    climberSpeed = m_climberController.calculate(m_climberMotor.getPosition().getValueAsDouble(), ClimberConstants.maxHeightPos);                        
+  public void setClimberSetpoint(double target) {
+    setpoint = target;
   }
 
-  private void climberDown() {
-    climberSpeed = m_climberController.calculate(m_climberMotor.getPosition().getValueAsDouble(), ClimberConstants.minHeightPos);                          
+  public void setDesiredState(ClimberState desiredState) {
+    m_desiredState = desiredState;
+  }
+
+  public double getPos() {
+    return m_climberMotor.getPosition().getValueAsDouble();
+  }
+
+  public void setMode(ClimberMode newMode) {
+    mode = newMode;
   }
 
   private void TEMPCLIMBDOWN() {
     climberSpeed = .1;
   }
 
-  public Command ClimberUp() {
-    return Commands.runEnd(() -> this.climberUp(), () -> this.stopClimber(), this);
-  }
-
-  public Command ClimberDown() {
-    return Commands.runEnd(() -> this.climberDown(), () -> this.stopClimber(), this);
+  public Command SetClimbMode(ClimberMode mode) {
+    return Commands.runOnce(() -> this.setMode(mode), this);
   }
 
   public Command TEMPCLIMBDOWNCMD() {

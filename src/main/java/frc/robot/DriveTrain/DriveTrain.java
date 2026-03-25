@@ -1,9 +1,10 @@
-package frc.robot.Subsystems;
+package frc.robot.DriveTrain;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.DoubleSupplier;
+import java.util.function.Supplier;
 
 import org.photonvision.EstimatedRobotPose;
 import org.photonvision.PhotonCamera;
@@ -64,6 +65,7 @@ import frc.robot.Robot;
 
 public class DriveTrain extends SubsystemBase {
   public enum DriveTrainZoneState {AllianceZone, NeutralZone}
+  public enum DriveTrainMode {TELEOP_DEFAULT, TELEOP_SHOOTING, TELEOP_COLLECTING, AUTON_BALLTRACKING};
 
   private final SwerveModule m_frontLeft, m_frontRight, m_backLeft, m_backRight;
   private final AHRS m_gyro;
@@ -93,7 +95,7 @@ public class DriveTrain extends SubsystemBase {
   private final PhotonCamera m_sideCam = new PhotonCamera(SensorConstants.frontCameraName);
 
   private final PhotonPoseEstimator m_frontEstimator = new PhotonPoseEstimator(tagLayout, SensorConstants.frontCamRobotToCam);
-  private final PhotonPoseEstimator m_sideEstimtor = new PhotonPoseEstimator(tagLayout, SensorConstants.sideCamRobotToCam);
+  private final PhotonPoseEstimator m_sideEstimator = new PhotonPoseEstimator(tagLayout, SensorConstants.sideCamRobotToCam);
 
   private Optional<EstimatedRobotPose> frontCamEstPos = Optional.empty(), sideCamEstPos = Optional.empty();
 
@@ -102,14 +104,15 @@ public class DriveTrain extends SubsystemBase {
   private final Debouncer crashDetectDebouncer = new Debouncer(DriveConstants.crashDebounceTime);
 
   private DriveTrainZoneState currentZone = DriveTrainZoneState.AllianceZone;
+  public DriveTrainMode currentMode = DriveTrainMode.TELEOP_DEFAULT;
 
-  private AdvancedPose2D initialPose = new AdvancedPose2D(1, 5), lastPose;
+  private AdvancedPose2D initialPose = FieldConstants.neutralZone.getTR(), lastPose;
   private ChassisSpeeds currentSpeeds = new ChassisSpeeds();
 
   private boolean fieldOrientation = true, isBrake = true, autonInRange = false, notified = false, 
                   crash = false, hasCrashed = false;
 
-  private double tx, ty, ta, tID, speedScaler, heading, x, y, omega;
+  private double tx, ty, ta, tID, heading, x, y, omega;
   private int periodicTimer = 1;
     
   /** Creates a new DriveTrain. */
@@ -272,8 +275,6 @@ public class DriveTrain extends SubsystemBase {
     y = 0;
     omega = 0;
 
-    speedScaler = DriveConstants.speedScaler;
-
     lastAccel = new TimedValue(0, 0);
 
     headingController.enableContinuousInput(-Math.PI, Math.PI);
@@ -322,7 +323,7 @@ public class DriveTrain extends SubsystemBase {
     if (frontCamEstPos.isEmpty()) frontCamEstPos = m_frontEstimator.estimateLowestAmbiguityPose(FCResult);
 
     PhotonPipelineResult SCResult = m_frontCam.getLatestResult();
-    sideCamEstPos = m_frontEstimator.estimateCoprocMultiTagPose(SCResult);
+    sideCamEstPos = m_sideEstimator.estimateCoprocMultiTagPose(SCResult);
     if (sideCamEstPos.isEmpty()) sideCamEstPos = m_frontEstimator.estimateLowestAmbiguityPose(SCResult);
 
     //Final Updating
@@ -335,6 +336,7 @@ public class DriveTrain extends SubsystemBase {
                                                                       frontCamEstPos.get().timestampSeconds);
     if (!sideCamEstPos.isEmpty()) poseEstimator.addVisionMeasurement(sideCamEstPos.get().estimatedPose.toPose2d(), 
                                                                      sideCamEstPos.get().timestampSeconds);
+                                                                     
     // Field Displaying
     estimateField.setRobotPose(new Pose2d(poseEstimator.getEstimatedPosition().getTranslation(), getHeading()));
 
@@ -433,31 +435,19 @@ public class DriveTrain extends SubsystemBase {
    * @param rot Angular rate of the robot.
    */
   public void teleopDrive(double xSpeed, double ySpeed, double rot) {
-    SmartDashboard.putString("Joystick Inputs", "X: " + xSpeed + " |Y: " + ySpeed + " |rot: " + rot);
-    rot = Math.pow(rot, 3);
+    //rot = Math.pow(rot, 3);
 
     double tempX = MathUtil.applyDeadband(xSpeed, DriveConstants.translationalDeadband);
     double tempY = MathUtil.applyDeadband(ySpeed, DriveConstants.translationalDeadband);
     double tempOmega = MathUtil.applyDeadband(rot, DriveConstants.rotationalDeadband);
 
-    x = tempX * DriveConstants.maxSpeedMetersPerSecond * speedScaler;
-    y = tempY * DriveConstants.maxSpeedMetersPerSecond * speedScaler;
-    omega = tempOmega * DriveConstants.maxRotationSpeedRadiansPerSecond * speedScaler;
+    x = tempX * DriveConstants.maxSpeedMetersPerSecond * pickSpeedScaler();
+    y = tempY * DriveConstants.maxSpeedMetersPerSecond * pickSpeedScaler();
+    omega = (currentMode == DriveTrainMode.TELEOP_COLLECTING ? 
+                headingController.calculate(getHeading().getDegrees(), Math.atan2(y, x)) : 
+                tempOmega * DriveConstants.maxRotationSpeedRadiansPerSecond) 
+             * pickSpeedScaler();
   }
-
-  // /**
-  //  * Drive the robot autonomously.
-  //  *
-  //  * @param xSpeed Speed of the robot in the x direction (forward).
-  //  * @param ySpeed Speed of the robot in the y direction (sideways).
-  //  * @param rot Angular rate of the robot.
-  //  */
-  // public void autonDrive(double xSpeed, double ySpeed, double rot) {
-  //   brakeAll();
-  //   x = xSpeed;
-  //   y = ySpeed;
-  //   omega = rot;
-  // }
 
   /**
    * Drive the robot accoring to a Choreo Trajectory
@@ -562,20 +552,6 @@ public class DriveTrain extends SubsystemBase {
   /** @return The current ChassisSpeeds of the {@link DriveTrain} */
   public ChassisSpeeds getChassisSpeeds() {
     return currentSpeeds;
-  }
-
-  /**
-   * Scales the max speed of the robot.
-   * 
-   * @param scaler What to multiply the SpeedScaler by.
-   */
-  public void scaleSpeedScaler(double scaler) {
-    speedScaler *= scaler;
-  }
-
-  /** @return The current SpeedScaler of the {@link DriveTrain} */
-  public synchronized double getSpeedScaler() {
-    return speedScaler;
   }
 
   /**
@@ -697,6 +673,26 @@ public class DriveTrain extends SubsystemBase {
     } else {
       fieldOrientation = true;
     }
+  }
+
+  public double pickSpeedScaler() {
+    double speedScaler = DriveConstants.defaultSpeedScaler;
+
+    switch (currentMode) {
+      case TELEOP_DEFAULT:
+        speedScaler = DriveConstants.defaultSpeedScaler;
+        break;
+      case TELEOP_SHOOTING:
+        speedScaler = DriveConstants.shootingSpeedScaler;
+        break;
+      case TELEOP_COLLECTING:
+        speedScaler = DriveConstants.collectionSpeedScaler;
+        break;
+      default:
+        speedScaler = DriveConstants.defaultSpeedScaler;
+        break;
+    }
+      return speedScaler;
   }
 
   /**
@@ -829,11 +825,23 @@ public class DriveTrain extends SubsystemBase {
     SmartDashboard.putString("ChassisSpeeds", speeds.toString());
   }
 
+  public void setCurrentMode(DriveTrainMode newMode) {
+    currentMode = newMode;
+  }
+
   /** COMMANDS */
   public Command TeleopDrive(DoubleSupplier xSupplier, DoubleSupplier ySupplier, DoubleSupplier omegaSupplier) {
     return Commands.runEnd(() -> this.teleopDrive(xSupplier.getAsDouble(), ySupplier.getAsDouble(), omegaSupplier.getAsDouble()),
                            () -> this.stop(),
                            this);
+  }
+
+  public Command SetDriveTrainMode(DriveTrainMode mode) {
+    return Commands.runOnce(() -> this.setCurrentMode(mode));
+  }
+
+  public Command SetDriveTrainMode(Supplier<DriveTrainMode> modeSupplier) {
+    return Commands.runOnce(() -> this.setCurrentMode(modeSupplier.get()));
   }
 
   public Command QuickBrake() {

@@ -1,7 +1,6 @@
 package frc.robot;
 
 import com.ctre.phoenix6.signals.NeutralModeValue;
-import com.ctre.phoenix6.signals.SensorDirectionValue;
 import com.pathplanner.lib.config.RobotConfig;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 
@@ -9,7 +8,6 @@ import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.Vector;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation3d;
-import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
@@ -17,7 +15,6 @@ import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.trajectory.TrapezoidProfile.Constraints;
 import edu.wpi.first.math.util.Units;
-import edu.wpi.first.units.Unit;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 import frc.Lib.AdvancedPose2D;
@@ -78,7 +75,9 @@ public final class Constants {
 
   /* Constants related to how the DriveTrain moves */
   public static final class DriveConstants {
-    public static final double speedScaler = .25;
+    public static final double defaultSpeedScaler = .85;
+    public static final double shootingSpeedScaler = .25;
+    public static final double collectionSpeedScaler = defaultSpeedScaler;
 
     public static final double maxSpeedMetersPerSecond = 5;
     public static final double maxAccelerationMetersPerSecondSquared = 4;
@@ -248,6 +247,9 @@ public final class Constants {
     /* Speed and Control */
     public static final double collectionSpeed = -.25;
     public static final double maxDeploySpeed = .5;
+    public static final double resistanceSpeed = .1;
+
+    public static final double restistanceSpeedthreshold = 0;
 
     public static final double deployGearRatio = 1;
     public static final double deployConversionFactor = Units.inchesToMeters(13) / 15.311;
@@ -264,8 +266,10 @@ public final class Constants {
     public static final double setpointOffset = .01;
 
     public static final double jostleInterval = .5;
-    public static final double jostleSpeedDifferential = .05;
+    public static final double jostlePositionDifferential = .05;
     public static final double closeToExtendedTolerance = 0;
+
+    public static final double resistanceDebounceTime = .3;
   }
 
   public static final class ClimberConstants {
@@ -275,6 +279,7 @@ public final class Constants {
     public static final double climberMaxDutyCycle = 1;
 
     public static final double maxHeightPos = -60;
+    public static final double climbedHeightPos = -30;
     public static final double minHeightPos = 0;
 
     public static final double climberKP = 0.012;
@@ -334,7 +339,8 @@ public final class Constants {
     public static final AdvancedPose2D turretOffsetCoordinates = new AdvancedPose2D(turretPosX, turretPosY);
     public static final Vector3D turretOffsetPos = new Vector3D(turretPosX, turretPosY, turretPosZ);
 
-    public static final double dotProductThreshold = .25;
+    public static final double trenchAngleThreshold = 15;
+    public static final double trenchDistanceThreshold = 1.5;
 
     public static final Vector<N3> poseEstimateOdometryStdDev = VecBuilder.fill(.05, .05, Units.degreesToRadians(.2));
     public static final Vector<N3> poseEstimateVisionStdDev = VecBuilder.fill(.1, .1, Units.degreesToRadians(3));
@@ -371,14 +377,14 @@ public final class Constants {
     public static final String sideCameraName = "sideCam";
 
     private static final double FCforward = 0;  // meters, forward from robot center
-    private static final double FCside = 0;      // meters, right of robot center
+    private static final double FCside = 0;      // meters, left of robot center
     private static final double FCup = 0;        // meters, up from robot center
     private static final double FCroll = 0.0;                                 // radians
     private static final double FCpitch = 0.0;                                // radians
     private static final double FCyaw = 0;                                  // radians
 
     private static final double SCforward = 0;  // meters, forward from robot center
-    private static final double SCside = 0;      // meters, rigt of robot center
+    private static final double SCside = 0;      // meters, left of robot center
     private static final double SCup = 0;        // meters, up from robot center
     private static final double SCroll = 0.0;                                 // radians
     private static final double SCpitch = 0.0;                                // radians
@@ -389,5 +395,33 @@ public final class Constants {
     public static final Transform3d sideCamRobotToCam = new Transform3d(new Translation3d(SCforward, SCside, SCup), 
                                                                          new Rotation3d(SCroll, SCpitch, SCyaw));
     
+  }
+
+  public static final class TurretShotConstants {
+    public static final double minDistance = 0;
+    public static final double maxDistance = 0;
+    public static final double maxAngle = 90 - ShooterConstants.maxHoodHeight;
+    public static final double minAngle = 90 - ShooterConstants.minHoodHeight;
+    public static final double maxVelocity = 0;
+    public static final double minVelocity = 0;
+
+    public static final double accuracyDecimalPlaces = 1;
+
+    // public static List<TurretShotList> shotLists = new ArrayList<TurretShotList>((int) ((maxAngle - minAngle) / 
+    //                                                                        Math.pow(10, -accuracyDecimalPlaces)));
+    
+
+    // {
+    //   for (double i = minDistance; i <= maxDistance; i += Math.pow(10, -accuracyDecimalPlaces)) {
+    //     shotLists.add((int) ((i - minDistance) / Math.pow(10, -accuracyDecimalPlaces)), new TurretShotList(i));
+    //   }
+
+    //   for (double theta = minAngle; theta <= maxAngle; theta += Math.pow(10, -accuracyDecimalPlaces)) {
+    //     for (double v = minVelocity; v <= maxVelocity; v += Math.pow(10, -accuracyDecimalPlaces)) {
+    //       double d = BlazeMath.roundToDecimalPlaces(BlazeMath.shotDistance(theta, v), accuracyDecimalPlaces);
+    //       shotLists.get((int) ((d - minDistance) / Math.pow(10, -accuracyDecimalPlaces))).list.add(new TurretShot(d, theta, v));
+    //     }
+    //   }
+    // }
   }
 }
