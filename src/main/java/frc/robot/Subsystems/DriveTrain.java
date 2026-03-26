@@ -28,7 +28,6 @@ import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
@@ -289,9 +288,9 @@ public class DriveTrain extends SubsystemBase {
     AutoBuilder.configure(this :: getPose,
                           this :: setInitialPose,
                           this :: getChassisSpeeds, 
-                          this :: chassisSpeedDrive,
+                          this :: PPDrive,
                           new PPHolonomicDriveController(
-                            new PIDConstants(AutonConstants.PPtranskP,AutonConstants.PPtranskI,AutonConstants.PPtranskD),
+                            new PIDConstants(AutonConstants.PPtranskP ,AutonConstants.PPtranskI,AutonConstants.PPtranskD),
                             new PIDConstants(AutonConstants.PPturnkP, AutonConstants.PPturnkI, AutonConstants.PPturnkD)), 
                           pathPlannerConfig,
                           () -> false,
@@ -434,6 +433,9 @@ public class DriveTrain extends SubsystemBase {
    */
   public void teleopDrive(double xSpeed, double ySpeed, double rot) {
     SmartDashboard.putString("Joystick Inputs", "X: " + xSpeed + " |Y: " + ySpeed + " |rot: " + rot);
+    fieldOrientation = true;
+
+
     rot = Math.pow(rot, 3);
 
     double tempX = MathUtil.applyDeadband(xSpeed, DriveConstants.translationalDeadband);
@@ -483,10 +485,16 @@ public class DriveTrain extends SubsystemBase {
    * @param speeds The desired ChassisSpeeds of the {@link DriveTrain}
    */
   public void chassisSpeedDrive(ChassisSpeeds speeds) {
-    brakeAll();
     x = speeds.vxMetersPerSecond;
     y = speeds.vyMetersPerSecond;
     omega = speeds.omegaRadiansPerSecond;
+  }
+
+  public void PPDrive(ChassisSpeeds speeds) {
+    x = speeds.vxMetersPerSecond;
+    y = speeds.vyMetersPerSecond;
+    omega = speeds.omegaRadiansPerSecond;
+    fieldOrientation = false;
   }
 
   /**

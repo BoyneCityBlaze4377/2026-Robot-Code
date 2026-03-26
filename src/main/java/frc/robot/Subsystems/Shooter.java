@@ -193,7 +193,7 @@ public class Shooter extends SubsystemBase {
     SmartDashboard.putData("Shooterfield", simField);
 
     // aimTurret(Rotation2d.fromDegrees(0));
-    revFlywheel();
+    // revFlywheel();
 
     SmartDashboard.putNumber("FWV", getVelocity());
   }

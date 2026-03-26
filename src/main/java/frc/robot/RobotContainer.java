@@ -1,5 +1,10 @@
 package frc.robot;
 
+import com.pathplanner.lib.auto.AutoBuilder;
+import com.pathplanner.lib.auto.NamedCommands;
+import com.pathplanner.lib.commands.PathPlannerAuto;
+import com.pathplanner.lib.path.PathPlannerPath;
+
 import choreo.auto.AutoFactory;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -36,6 +41,7 @@ public class RobotContainer {
   
   /** The container for the robot. Contains subsystems, OI devices, and commands. */
   public RobotContainer() {
+    NamedCommands.registerCommand("shoot", m_shooter.runIndex());
     //Configure the trigger bindings
     configureBindings();
     m_driveTrain.setDefaultCommand(m_driveTrain.TeleopDrive(() -> -m_tempStick.getRawAxis(IOConstants.xAxis), 
@@ -66,6 +72,7 @@ public class RobotContainer {
     new JoystickButton(m_tempStick, 4).whileTrue(m_climber.TEMPCLIMBDOWNCMD());
   }
 
+
   /**
    * Use this to pass the autonomous command to the main {@link Robot} class.
    *
@@ -73,6 +80,7 @@ public class RobotContainer {
    */
   public Command getAutonomousCommand() {
     // An example command will be run in autonomous
-    return null;
+    // return null;
+    return new PathPlannerAuto("TEST");
   }
 }

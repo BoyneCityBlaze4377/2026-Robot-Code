@@ -1,7 +1,6 @@
 package frc.robot;
 
 import com.ctre.phoenix6.signals.NeutralModeValue;
-import com.ctre.phoenix6.signals.SensorDirectionValue;
 import com.pathplanner.lib.config.RobotConfig;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 
@@ -9,7 +8,6 @@ import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.Vector;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation3d;
-import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
@@ -17,7 +15,6 @@ import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.trajectory.TrapezoidProfile.Constraints;
 import edu.wpi.first.math.util.Units;
-import edu.wpi.first.units.Unit;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 import frc.Lib.AdvancedPose2D;
@@ -78,7 +75,7 @@ public final class Constants {
 
   /* Constants related to how the DriveTrain moves */
   public static final class DriveConstants {
-    public static final double speedScaler = .25;
+    public static final double speedScaler = .75;
 
     public static final double maxSpeedMetersPerSecond = 5;
     public static final double maxAccelerationMetersPerSecondSquared = 4;
@@ -344,13 +341,13 @@ public final class Constants {
   public class AutonConstants {
     public static RobotConfig robotConfig;
 
-    public static final double PPtranskP = 2;//2
-    public static final double PPtranskI = 0;
-    public static final double PPtranskD = 0;
+    public static final double PPtranskP = 3; //2
+    public static final double PPtranskI = 0; //0
+    public static final double PPtranskD = .025; //0
 
-    public static final double PPturnkP = 4.5;//4.5
-    public static final double PPturnkI = .355;//.355
-    public static final double PPturnkD = 0;
+    public static final double PPturnkP = 4.5; //4.5
+    public static final double PPturnkI = 0; //.355
+    public static final double PPturnkD = 0; //0
   }
 
   public class SensorConstants {

@@ -13,18 +13,12 @@
                 "data": {
                   "pathName": "Trench2PreBall"
                 }
-              },
-              {
-                "type": "named",
-                "data": {
-                  "name": "ShootWMoving"
-                }
               }
             ]
           }
         },
         {
-          "type": "parallel",
+          "type": "deadline",
           "data": {
             "commands": [
               {
@@ -36,13 +30,7 @@
               {
                 "type": "named",
                 "data": {
-                  "name": "ShootWMoving"
-                }
-              },
-              {
-                "type": "named",
-                "data": {
-                  "name": "Collect"
+                  "name": "shoot"
                 }
               }
             ]
@@ -62,18 +50,6 @@
                 "type": "path",
                 "data": {
                   "pathName": "TopMiddleThrogh"
-                }
-              },
-              {
-                "type": "named",
-                "data": {
-                  "name": "Collect"
-                }
-              },
-              {
-                "type": "named",
-                "data": {
-                  "name": "Shoot2Field"
                 }
               }
             ]

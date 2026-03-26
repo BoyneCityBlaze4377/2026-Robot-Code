@@ -5,7 +5,7 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
-
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import frc.robot.Constants.FieldConstants;
 
 public class AdvancedPose2D extends Pose2d {
@@ -37,7 +37,11 @@ public class AdvancedPose2D extends Pose2d {
         super(pose3d.getTranslation().getX(), pose3d.getTranslation().getY(), pose3d.getRotation().toRotation2d());
     }
 
-    public AdvancedPose2D rotateBy(Rotation2d rotation) {
+    public AdvancedPose2D(ChassisSpeeds speeds) {
+        super(speeds.vxMetersPerSecond, speeds.vyMetersPerSecond, Rotation2d.fromRadians(speeds.omegaRadiansPerSecond));
+    }
+
+    public AdvancedPose2D addRotation(Rotation2d rotation) {
         return new AdvancedPose2D(this.getTranslation(), Rotation2d.fromDegrees(MathUtil.inputModulus(
                                                             this.getHeadingDegrees() + rotation.getDegrees(), -180, 180)));
     }
