@@ -1,6 +1,5 @@
-package frc.robot.Subsystems;
+package frc.robot.Shooter;
 
-import java.util.Vector;
 import java.util.function.Supplier;
 
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
@@ -14,6 +13,7 @@ import com.revrobotics.spark.SparkClosedLoopController;
 import com.revrobotics.spark.SparkFlex;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.SparkMax;
+import com.revrobotics.spark.SparkBase.ControlType;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkFlexConfig;
 import com.revrobotics.spark.config.SparkMaxConfig;
@@ -22,11 +22,8 @@ import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Rotation3d;
-import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.util.Units;
-import edu.wpi.first.units.Unit;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -35,12 +32,15 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.Lib.AdvancedPose2D;
 import frc.Lib.BlazeMath;
 import frc.Lib.Vector3D;
-import frc.robot.Constants.AutoAimConstants;
 import frc.robot.Constants.FieldConstants;
 import frc.robot.Constants.ShooterConstants;
-import frc.robot.Subsystems.DriveTrain.DriveTrainZoneState;
+import frc.robot.Constants.TurretShotConstants;
+import frc.robot.DriveTrain.DriveTrain;
+import frc.robot.DriveTrain.DriveTrain.DriveTrainZoneState;
 
 public class Shooter extends SubsystemBase {
+  public enum ShooterMode {SHOOTING, IDLE, TRENCH, AIMING};
+
   private final TalonFX m_turret, m_hood;
   private final TalonFXConfiguration m_turretConfig, m_hoodConfig;
 
@@ -71,8 +71,20 @@ public class Shooter extends SubsystemBase {
   private Pose3d currentPosition3D = new Pose3d();
   private Vector3D currentVelocity = new Vector3D();
 
-  private boolean canShoot = false;
-  private Rotation2d turretAngle, hoodAngle;
+  public ShooterState m_desiredState, m_currentState;
+  public ShooterMode currentMode = ShooterMode.IDLE, desiredMode = ShooterMode.IDLE;
+
+  public static final double minDistance = TurretShotConstants.minDistance;
+  public static final double maxDistance = TurretShotConstants.maxDistance;
+  public static final double maxAngle = TurretShotConstants.maxAngle;
+  public static final double minAngle = TurretShotConstants.minAngle;
+  public static final double maxVelocity = TurretShotConstants.maxVelocity;
+  public static final double minVelocity = TurretShotConstants.minVelocity;
+
+  public static final double accuracyDecimalPlaces = TurretShotConstants.accuracyDecimalPlaces;
+
+  // public static List<TurretShotList> shotLists = new ArrayList<TurretShotList>((int) ((maxAngle - minAngle) / 
+  //                                                                          Math.pow(10, -accuracyDecimalPlaces)));
 
   /** Creates a new Shooter. */
   public Shooter(Supplier<AdvancedPose2D> driveTrainPosition, 
@@ -107,7 +119,7 @@ public class Shooter extends SubsystemBase {
     m_fineTuneAimingController = new PIDController(ShooterConstants.fineTuneAimingKP, 
                                                    ShooterConstants.finetuneAimingKI, 
                                                    ShooterConstants.fineTuneAimingKD);
-                                                   
+    
     m_bigMoveAimingController.disableContinuousInput();
     m_fineTuneAimingController.disableContinuousInput();
 
@@ -126,10 +138,14 @@ public class Shooter extends SubsystemBase {
 
     m_hood.setPosition(ShooterConstants.minHoodHeight / ShooterConstants.hoodConversionFactor);
     //m_turret.setPosition(0);
-    hoodAngle = Rotation2d.fromDegrees(m_hood.getPosition().getValueAsDouble() * ShooterConstants.hoodConversionFactor);
-    turretAngle = Rotation2d.fromDegrees(m_turret.getPosition().getValueAsDouble() * ShooterConstants.aimingConversionFactor);
 
     simField = new Field2d();
+
+    m_desiredState = new ShooterState(Rotation2d.fromDegrees(getTurretPos()));
+    m_currentState = new ShooterState(Rotation2d.fromDegrees(getTurretPos()), 
+                                      Rotation2d.fromDegrees(90 - getHoodPos()), 
+                                      getVelocity(),
+                                      m_desiredState.isShooting);
   }
 
   @Override
@@ -140,62 +156,79 @@ public class Shooter extends SubsystemBase {
     driveTrainOmega = m_driveTrainAngularVelocitySupplier.get();
     currentZone = m_driveTrainZoneStateSupplier.get();
 
-    // driveTrainSpeeds = new ChassisSpeeds(3, 1, Math.PI/4);
-    // driveTrainOmega = new Vector3D(0, 0, -driveTrainSpeeds.omegaRadiansPerSecond);
+    AdvancedPose2D closestTrench = driveTrainPos.getClosest(FieldConstants.leftTrench.getMidpoint(), 
+                                                            FieldConstants.rightTrench.getMidpoint());
 
-    Vector3D driveTrainVelocityVector = new Vector3D(driveTrainSpeeds.vxMetersPerSecond, driveTrainSpeeds.vyMetersPerSecond);
-
-    currentPosition = driveTrainPos.withVector(driveTrainPos.getRotation(), 
-                                               AutoAimConstants.turretOffsetCoordinates.getTranslation(), 
-                                               new Rotation2d());
-    currentPosition3D = new Pose3d(currentPosition.getX(), currentPosition.getY(), AutoAimConstants.turretOffsetPos.getZ(), 
-                                   new Rotation3d());
-
-    Vector3D vectorToTrench = Vector3D.fromPoints(driveTrainPos, driveTrainPos.getClosest(
-                                                                          FieldConstants.leftTrench.getMidpoint(), 
-                                                                          FieldConstants.rightTrench.getMidpoint()));
-    canShoot = true;
-    // !FieldConstants.trenchZone.pointInZone(driveTrainPos) &&
-    //            vectorToTrench.getDotProduct(driveTrainVelocityVector) < 
-    //               AutoAimConstants.dotProductThreshold * Math.pow(vectorToTrench.get2DMagnitude(), 2);
-    
-    Vector3D currentVelocity2D = Vector3D.getPointVelocity(new Vector3D(driveTrainSpeeds.vxMetersPerSecond, 
-                                                             driveTrainSpeeds.vyMetersPerSecond), 
-                                                new Vector3D(currentPosition), 
-                                                driveTrainOmega);   
-                                                
-    currentVelocity = new Vector3D(new AdvancedPose2D().withVector(driveTrainPos.getRotation(), 
-        new Translation2d(currentVelocity2D.getX(), currentVelocity2D.getY()), new Rotation2d()));
+    boolean trenchFlag = ShooterMath.tooCloseToTrench(driveTrainPos, closestTrench) &&
+                         ShooterMath.movingTowardsTrench(driveTrainPos, driveTrainSpeeds, closestTrench);
                                                 
     Pose3d targetPose = currentZone == DriveTrainZoneState.AllianceZone ? FieldConstants.hubPosition : 
                           new Pose3d(currentPosition.getClosest(FieldConstants.leftShuttleTarget, 
                                                                 FieldConstants.rightShuttleTarget));
 
-    if (canShoot) {
-      //revFlywheel();
-      aimAt(targetPose);
+    ShooterState stateToTarget = ShooterMath.calcDesiredState(driveTrainPos, 
+                                                              driveTrainSpeeds, 
+                                                              driveTrainOmega, 
+                                                              targetPose, 
+                                                              getVelocity());
+                                                   
+    if (desiredMode == ShooterMode.SHOOTING) {
+      if (ShooterMath.moveIsTooBig(getTurretPos(), m_desiredState.angleToTarget.getDegrees())) {
+        currentMode = ShooterMode.AIMING;
+      } else if (trenchFlag) {
+        currentMode = ShooterMode.TRENCH;
+      } else {
+        currentMode = ShooterMode.SHOOTING;
+      }
     } else {
-      hoodAngle = Rotation2d.fromDegrees(ShooterConstants.minHoodHeight);
+      currentMode = desiredMode;
     }
 
-    // Pose3d targetPose = new Pose3d(5,5,0, new Rotation3d());
-    Vector3D turretAimVector = Vector3D.fromPoints(currentPosition3D, targetPose);//.minus(currentVelocity);
-    turretAngle = Rotation2d.fromRadians(Math.atan2(turretAimVector.getY(), turretAimVector.getX())).minus(driveTrainPos.getRotation());
-    // aimTurret(turretAngle);
-    angleHood(hoodAngle);
+    switch (currentMode) {
+      case IDLE:
+        setDesiredState(new ShooterState(stateToTarget.angleToTarget));
+        break;
+      case SHOOTING:
+        setDesiredState(stateToTarget);
+        break;
+      case AIMING:
+        setDesiredState(stateToTarget.noShooting());
+        break;
+      case TRENCH:
+        setDesiredState(new ShooterState(stateToTarget.angleToTarget, 
+                                         Rotation2d.fromDegrees(90 - ShooterConstants.minHoodHeight), 
+                                         stateToTarget.shotVelocity,
+                                         false));
+        break;
+      default:
+        setDesiredState(new ShooterState(stateToTarget.angleToTarget));
+        break;
+    }
+
+    aimTurret(m_desiredState.angleToTarget);
+    angleHood(m_desiredState.shotPitch);
+    setVelocity(m_desiredState.shotVelocity); 
+    if (m_desiredState.isShooting) runIndexers();
 
     SmartDashboard.putNumber("Turret Pos", getTurretPos());
     SmartDashboard.putNumber("HoodPos", getHoodPos());
-    SmartDashboard.putNumber("DesTurAngle", turretAngle.getDegrees());
+    SmartDashboard.putNumber("DesTurAngle", m_desiredState.angleToTarget.getDegrees());
 
     simField.setRobotPose(driveTrainPos);
     simField.getObject("Turret Target").setPose(targetPose.toPose2d());
-    SmartDashboard.putData("Shooterfield", simField);
+    SmartDashboard.putData("ShooterField", simField);
 
+<<<<<<< HEAD:src/main/java/frc/robot/Subsystems/Shooter.java
     // aimTurret(Rotation2d.fromDegrees(0));
     // revFlywheel();
 
     SmartDashboard.putNumber("FWV", getVelocity());
+=======
+    m_currentState = new ShooterState(Rotation2d.fromDegrees(getTurretPos()), 
+                                      Rotation2d.fromDegrees(90 - getHoodPos()), 
+                                      getVelocity(),
+                                      m_desiredState.isShooting);
+>>>>>>> f4fd2ba434377ab92ed8330f76717c19b80af6a9:src/main/java/frc/robot/Shooter/Shooter.java
   }
 
   public void configMotorDefaults() {
@@ -335,35 +368,36 @@ public class Shooter extends SubsystemBase {
     SmartDashboard.putNumber("HoodTarget", target);
   }
 
-  public void aimAt(Pose3d targetPose) {
-    double flyWheelVelocity = 15;// Units.rotationsPerMinuteToRadiansPerSecond(m_flywheelEncoder.getVelocity()) 
-                                        //* Units.inchesToMeters(2);
-
-    SmartDashboard.putNumber("FWV", flyWheelVelocity);
-    double horizDistance = 4;//new AdvancedPose2D(targetPose).getDistance(currentPosition);
-    double vertDistance = 1.5;//targetPose.getZ() - currentPosition3D.getZ();
-
-    SmartDashboard.putNumber("Distance", vertDistance);
-
-    double a = -4.9 * Math.pow(horizDistance / flyWheelVelocity, 2);
-    double b = horizDistance;
-    double c = -(4.9 * Math.pow(horizDistance / flyWheelVelocity, 2) + vertDistance);
-    double[] abc = {a, b, c};
-    SmartDashboard.putNumberArray("ABC", abc);
-
-    double quadFormSolution = (-b - Math.sqrt(Math.pow(b, 2) - 4 * a * c)) / (2 * a);
-    SmartDashboard.putNumber("QFS", quadFormSolution);
-
-    hoodAngle = Rotation2d.fromRadians(Math.atan(quadFormSolution));
-    SmartDashboard.putNumber("hood angle", hoodAngle.getDegrees());
-
-    double t = horizDistance / (flyWheelVelocity * hoodAngle.getCos());
-    SmartDashboard.putNumber("t", t);
-    SmartDashboard.putNumber("solved y", flyWheelVelocity * hoodAngle.getSin() * t - 4.9 * Math.pow(t, 2));
-  }
-
   public Command runIndex() {
     return Commands.runEnd(() -> this.runIndexers(), 
                            () -> this.stopIndexers());
+  }
+
+  public double getVelocity() {
+    return Units.rotationsPerMinuteToRadiansPerSecond(m_flywheelEncoder.getVelocity()) * Units.inchesToMeters(2);
+  }
+
+  public void setVelocity(double velocity) {
+    m_velocityController.setSetpoint(Units.radiansPerSecondToRotationsPerMinute(velocity / 2), ControlType.kVelocity);
+  }
+
+  public void setDesiredState(ShooterState desiredState) {
+    m_desiredState = desiredState;
+  }
+
+  public ShooterState getCurrentState() {
+    return m_currentState;
+  }
+
+  public void setDesiredMode(ShooterMode newMode) {
+    currentMode = newMode;
+  }
+
+  public ShooterMode getCurrentMode() {
+    return currentMode;
+  }
+
+  public Command SetShooterMode(ShooterMode mode) {
+    return Commands.runOnce(() -> this.setDesiredMode(mode));
   }
 }
