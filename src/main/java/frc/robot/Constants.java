@@ -15,6 +15,7 @@ import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.trajectory.TrapezoidProfile.Constraints;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.units.Unit;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 import frc.Lib.AdvancedPose2D;
@@ -333,7 +334,7 @@ public final class Constants {
     public static final double turnkTolerance = .03;
 
     private final static double turretPosX = -Units.inchesToMeters(3 + 3/4); //Right positive
-    private final static double turretPosY = Units.inchesToMeters(6 + 1/4); //Front positive
+    private final static double turretPosY = -Units.inchesToMeters(6 + 1/4); //Front positive
     private final static double turretPosZ = Units.inchesToMeters(17); //Up positive
 
     public static final AdvancedPose2D turretOffsetCoordinates = new AdvancedPose2D(turretPosX, turretPosY);
@@ -363,8 +364,8 @@ public final class Constants {
     /** LIMELIGHT */
     public static final String limeLightName = "limelight";
 
-    private static final double LLforward = -Units.inchesToMeters(13 + 7/8);  // meters, forward from robot center
-    private static final double LLside = Units.inchesToMeters(10 + 1/4);      // meters, left of robot center
+    private static final double LLforward = -Units.inchesToMeters(13.75);  // meters, forward from robot center
+    private static final double LLside = -Units.inchesToMeters(10 + 1/4);      // meters, left of robot center
     private static final double LLup = Units.inchesToMeters(19 + 1/4);        // meters, up from robot center
     private static final double LLroll = 0.0;                                 // degrees
     private static final double LLpitch = 0.0;                                // degrees
@@ -376,16 +377,16 @@ public final class Constants {
     public static final String frontCameraName = "frontCam";
     public static final String sideCameraName = "sideCam";
 
-    private static final double FCforward = 0;  // meters, forward from robot center
-    private static final double FCside = 0;      // meters, left of robot center
-    private static final double FCup = 0;        // meters, up from robot center
+    private static final double FCforward = Units.inchesToMeters(13.75);  // meters, forward from robot center
+    private static final double FCside = -Units.inchesToMeters(9.875);      // meters, left of robot center
+    private static final double FCup = Units.inchesToMeters(17.4375);        // meters, up from robot center
     private static final double FCroll = 0.0;                                 // radians
-    private static final double FCpitch = 0.0;                                // radians
+    private static final double FCpitch = 0;                                // radians
     private static final double FCyaw = 0;                                  // radians
 
-    private static final double SCforward = 0;  // meters, forward from robot center
-    private static final double SCside = 0;      // meters, left of robot center
-    private static final double SCup = 0;        // meters, up from robot center
+    private static final double SCforward = Units.inchesToMeters(1.375);  // meters, forward from robot center
+    private static final double SCside = Units.inchesToMeters(13.75);      // meters, left of robot center
+    private static final double SCup = Units.inchesToMeters(17.6875);        // meters, up from robot center
     private static final double SCroll = 0.0;                                 // radians
     private static final double SCpitch = 0.0;                                // radians
     private static final double SCyaw = Math.PI/2;                                  // radians

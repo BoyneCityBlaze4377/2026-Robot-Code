@@ -1,5 +1,6 @@
 package frc.robot.Shooter;
 
+import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
@@ -74,17 +75,7 @@ public class Shooter extends SubsystemBase {
   public ShooterState m_desiredState, m_currentState;
   public ShooterMode currentMode = ShooterMode.IDLE, desiredMode = ShooterMode.IDLE;
 
-  public static final double minDistance = TurretShotConstants.minDistance;
-  public static final double maxDistance = TurretShotConstants.maxDistance;
-  public static final double maxAngle = TurretShotConstants.maxAngle;
-  public static final double minAngle = TurretShotConstants.minAngle;
-  public static final double maxVelocity = TurretShotConstants.maxVelocity;
-  public static final double minVelocity = TurretShotConstants.minVelocity;
-
-  public static final double accuracyDecimalPlaces = TurretShotConstants.accuracyDecimalPlaces;
-
-  // public static List<TurretShotList> shotLists = new ArrayList<TurretShotList>((int) ((maxAngle - minAngle) / 
-  //                                                                          Math.pow(10, -accuracyDecimalPlaces)));
+  public boolean isCollecting = false;
 
   /** Creates a new Shooter. */
   public Shooter(Supplier<AdvancedPose2D> driveTrainPosition, 
@@ -174,7 +165,8 @@ public class Shooter extends SubsystemBase {
                                                    
     if (desiredMode == ShooterMode.SHOOTING) {
       if (ShooterMath.moveIsTooBig(getTurretPos(), m_desiredState.angleToTarget.getDegrees())) {
-        currentMode = ShooterMode.AIMING;
+        //currentMode = ShooterMode.AIMING;
+        currentMode = ShooterMode.SHOOTING;
       } else if (trenchFlag) {
         currentMode = ShooterMode.TRENCH;
       } else {
@@ -183,6 +175,9 @@ public class Shooter extends SubsystemBase {
     } else {
       currentMode = desiredMode;
     }
+    
+    if (currentMode == ShooterMode.IDLE && isCollecting) currentMode = ShooterMode.AIMING;
+    if (currentMode == ShooterMode.AIMING && trenchFlag) currentMode = ShooterMode.TRENCH;
 
     switch (currentMode) {
       case IDLE:
@@ -206,22 +201,27 @@ public class Shooter extends SubsystemBase {
     }
 
     aimTurret(m_desiredState.angleToTarget);
+<<<<<<< HEAD
     // angleHood(m_desiredState.shotPitch);
     setVelocity(m_desiredState.shotVelocity); 
+=======
+    angleHood(m_desiredState.shotPitch);
+    revFlywheel(m_desiredState.shotVelocity);
+>>>>>>> c9f893ab12b0062302b088cbc4d0e2f80f2039e7
     if (m_desiredState.isShooting) runIndexers();
 
-    SmartDashboard.putNumber("Turret Pos", getTurretPos());
-    SmartDashboard.putNumber("HoodPos", getHoodPos());
-    SmartDashboard.putNumber("DesTurAngle", m_desiredState.angleToTarget.getDegrees());
-
     simField.setRobotPose(driveTrainPos);
-    simField.getObject("Turret Target").setPose(targetPose.toPose2d());
-    SmartDashboard.putData("ShooterField", simField);
 
     m_currentState = new ShooterState(Rotation2d.fromDegrees(getTurretPos()), 
                                       Rotation2d.fromDegrees(90 - getHoodPos()), 
                                       getVelocity(),
                                       m_desiredState.isShooting);
+<<<<<<< HEAD
+=======
+
+    SmartDashboard.putString("ShooterMode", getCurrentMode().toString());
+
+>>>>>>> c9f893ab12b0062302b088cbc4d0e2f80f2039e7
   }
 
   public void configMotorDefaults() {
@@ -277,13 +277,8 @@ public class Shooter extends SubsystemBase {
     m_flyWheelMotor1.set(speed);
   }
 
-  public void revFlywheel() {
-    double velocity = .25; //ShooterConstants.maxVelocity;
-                      // ShooterConstants.minVelocity + 
-                      // (ShooterConstants.maxVelocity - ShooterConstants.minVelocity) *
-                      // (driveTrainPos.getDistance(FieldConstants.hubCoordinates) / FieldConstants.outpostPos
-                      //                                                               .getDistance(FieldConstants.hubCoordinates));
-
+  public void revFlywheel(double shotVelocity) {
+    double velocity = ShooterMath.getMotorOutputFromVelocity(shotVelocity);
     genericShoot(velocity + ShooterConstants.velocityAddOn);
   }
 
@@ -363,11 +358,8 @@ public class Shooter extends SubsystemBase {
   }
 
   public double getVelocity() {
-    return Units.rotationsPerMinuteToRadiansPerSecond(m_flywheelEncoder.getVelocity()) * Units.inchesToMeters(2);
-  }
-
-  public void setVelocity(double velocity) {
-    m_velocityController.setSetpoint(Units.radiansPerSecondToRotationsPerMinute(velocity / 2), ControlType.kVelocity);
+    return ShooterMath.getVelocityFromMotorOutput(m_flyWheelMotor1.get());
+    //Units.rotationsPerMinuteToRadiansPerSecond(m_flywheelEncoder.getVelocity()) * Units.inchesToMeters(2);
   }
 
   public void setDesiredState(ShooterState desiredState) {
@@ -379,11 +371,15 @@ public class Shooter extends SubsystemBase {
   }
 
   public void setDesiredMode(ShooterMode newMode) {
-    currentMode = newMode;
+    desiredMode = newMode;
   }
 
   public ShooterMode getCurrentMode() {
     return currentMode;
+  }
+
+  public void setIsCollecting(BooleanSupplier collecting) {
+    isCollecting = collecting.getAsBoolean();
   }
 
   public Command SetShooterMode(ShooterMode mode) {

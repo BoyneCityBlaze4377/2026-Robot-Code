@@ -39,20 +39,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": "PreBall2Mid"
-          }
-        },
-        {
-          "type": "parallel",
-          "data": {
-            "commands": [
-              {
-                "type": "path",
-                "data": {
-                  "pathName": "TopMiddleThrogh"
-                }
-              }
-            ]
+            "pathName": null
           }
         }
       ]
