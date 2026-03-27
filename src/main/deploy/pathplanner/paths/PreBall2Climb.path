@@ -3,29 +3,29 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 3.65,
-        "y": 4.035
+        "x": 0.39112048192771065,
+        "y": 4.999
       },
       "prevControl": null,
       "nextControl": {
-        "x": 4.129524764934976,
-        "y": 3.6607373205917155
+        "x": 1.1537375178316684,
+        "y": 5.0377460770328115
       },
       "isLocked": false,
-      "linkedName": "Hopper"
+      "linkedName": "PreBallEnd"
     },
     {
       "anchor": {
-        "x": 0.4032952924393719,
-        "y": 7.224379457917262
+        "x": 1.0631669044222536,
+        "y": 6.202225392296718
       },
       "prevControl": {
-        "x": 2.071618462437481,
-        "y": 7.311769967172543
+        "x": 1.3219400855920111,
+        "y": 5.322396576319543
       },
       "nextControl": null,
       "isLocked": false,
-      "linkedName": "PreBall"
+      "linkedName": "ClimbSet"
     }
   ],
   "rotationTargets": [],
@@ -42,13 +42,13 @@
   },
   "goalEndState": {
     "velocity": 0,
-    "rotation": -90.0
+    "rotation": 0.0
   },
   "reversed": false,
-  "folder": "Starts",
+  "folder": null,
   "idealStartingState": {
-    "velocity": 0,
-    "rotation": 180.0
+    "velocity": 1.0,
+    "rotation": -90.0
   },
   "useDefaultConstraints": true
 }

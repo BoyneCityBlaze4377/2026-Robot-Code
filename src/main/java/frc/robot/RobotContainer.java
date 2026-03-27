@@ -3,6 +3,8 @@ package frc.robot;
 import java.util.function.Supplier;
 
 import com.pathplanner.lib.auto.NamedCommands;
+import com.pathplanner.lib.commands.PathPlannerAuto;
+import com.pathplanner.lib.path.PathPlannerPath;
 
 import choreo.auto.AutoFactory;
 import edu.wpi.first.wpilibj.Joystick;
@@ -130,6 +132,6 @@ public class RobotContainer {
   public Command getAutonomousCommand() {
     // An example command will be run in autonomous
     // return null;
-    return new PathPlannerAuto("TEST");
+    return new PathPlannerAuto("PreBall2Climb");
   }
 }

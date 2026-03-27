@@ -137,7 +137,7 @@ public class Shooter extends SubsystemBase {
     configMotorDefaults();
 
     m_hood.setPosition(ShooterConstants.minHoodHeight / ShooterConstants.hoodConversionFactor);
-    //m_turret.setPosition(0);
+    // m_turret.setPosition(0);
 
     simField = new Field2d();
 
@@ -206,7 +206,7 @@ public class Shooter extends SubsystemBase {
     }
 
     aimTurret(m_desiredState.angleToTarget);
-    angleHood(m_desiredState.shotPitch);
+    // angleHood(m_desiredState.shotPitch);
     setVelocity(m_desiredState.shotVelocity); 
     if (m_desiredState.isShooting) runIndexers();
 
@@ -218,17 +218,10 @@ public class Shooter extends SubsystemBase {
     simField.getObject("Turret Target").setPose(targetPose.toPose2d());
     SmartDashboard.putData("ShooterField", simField);
 
-<<<<<<< HEAD:src/main/java/frc/robot/Subsystems/Shooter.java
-    // aimTurret(Rotation2d.fromDegrees(0));
-    // revFlywheel();
-
-    SmartDashboard.putNumber("FWV", getVelocity());
-=======
     m_currentState = new ShooterState(Rotation2d.fromDegrees(getTurretPos()), 
                                       Rotation2d.fromDegrees(90 - getHoodPos()), 
                                       getVelocity(),
                                       m_desiredState.isShooting);
->>>>>>> f4fd2ba434377ab92ed8330f76717c19b80af6a9:src/main/java/frc/robot/Shooter/Shooter.java
   }
 
   public void configMotorDefaults() {
@@ -292,10 +285,6 @@ public class Shooter extends SubsystemBase {
                       //                                                               .getDistance(FieldConstants.hubCoordinates));
 
     genericShoot(velocity + ShooterConstants.velocityAddOn);
-  }
-
-  public double getVelocity() {
-    return Units.rotationsPerMinuteToRadiansPerSecond(m_flywheelEncoder.getVelocity()) * Units.inchesToMeters(2);
   }
 
   private void runSpindexer() {

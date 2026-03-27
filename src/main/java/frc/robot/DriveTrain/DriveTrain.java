@@ -105,7 +105,7 @@ public class DriveTrain extends SubsystemBase {
   private DriveTrainZoneState currentZone = DriveTrainZoneState.AllianceZone;
   public DriveTrainMode currentMode = DriveTrainMode.TELEOP_DEFAULT;
 
-  private AdvancedPose2D initialPose = FieldConstants.neutralZone.getTR(), lastPose;
+  private AdvancedPose2D initialPose = new AdvancedPose2D(), lastPose;
   private ChassisSpeeds currentSpeeds = new ChassisSpeeds();
 
   private boolean fieldOrientation = true, isBrake = true, autonInRange = false, notified = false, 
@@ -321,9 +321,9 @@ public class DriveTrain extends SubsystemBase {
     frontCamEstPos = m_frontEstimator.estimateCoprocMultiTagPose(FCResult);
     if (frontCamEstPos.isEmpty()) frontCamEstPos = m_frontEstimator.estimateLowestAmbiguityPose(FCResult);
 
-    PhotonPipelineResult SCResult = m_frontCam.getLatestResult();
+    PhotonPipelineResult SCResult = m_sideCam.getLatestResult();
     sideCamEstPos = m_sideEstimator.estimateCoprocMultiTagPose(SCResult);
-    if (sideCamEstPos.isEmpty()) sideCamEstPos = m_frontEstimator.estimateLowestAmbiguityPose(SCResult);
+    if (sideCamEstPos.isEmpty()) sideCamEstPos = m_sideEstimator.estimateLowestAmbiguityPose(SCResult);
 
     //Final Updating
     poseEstimator.update(getHeading(), getSwerveModulePositions());
@@ -368,6 +368,9 @@ public class DriveTrain extends SubsystemBase {
     
     // Update random stuff
     isBrake = m_frontLeft.getNeutralMode() == NeutralModeValue.Brake;
+
+    if (frontCamEstPos.isPresent()) estimateField.getObject("PHEST").setPose(sideCamEstPos.get().estimatedPose.toPose2d());
+    if (sideCamEstPos.isPresent()) estimateField.getObject("SCEST").setPose(sideCamEstPos.get().estimatedPose.toPose2d());
 
     // Drive Robot
     rawDrive(x , y, omega);
@@ -434,15 +437,7 @@ public class DriveTrain extends SubsystemBase {
    * @param rot Angular rate of the robot.
    */
   public void teleopDrive(double xSpeed, double ySpeed, double rot) {
-<<<<<<< HEAD:src/main/java/frc/robot/Subsystems/DriveTrain.java
-    SmartDashboard.putString("Joystick Inputs", "X: " + xSpeed + " |Y: " + ySpeed + " |rot: " + rot);
-    fieldOrientation = true;
-
-
-    rot = Math.pow(rot, 3);
-=======
     //rot = Math.pow(rot, 3);
->>>>>>> f4fd2ba434377ab92ed8330f76717c19b80af6a9:src/main/java/frc/robot/DriveTrain/DriveTrain.java
 
     double tempX = MathUtil.applyDeadband(xSpeed, DriveConstants.translationalDeadband);
     double tempY = MathUtil.applyDeadband(ySpeed, DriveConstants.translationalDeadband);

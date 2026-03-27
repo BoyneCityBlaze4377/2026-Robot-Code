@@ -9,37 +9,24 @@
           "data": {
             "commands": [
               {
-                "type": "named",
-                "data": {
-                  "name": "shoot"
-                }
-              },
-              {
                 "type": "wait",
                 "data": {
                   "waitTime": 2.0
                 }
-              }
-            ]
-          }
-        },
-        {
-          "type": "deadline",
-          "data": {
-            "commands": [
-              {
-                "type": "path",
-                "data": {
-                  "pathName": "TrenchLow2Middle"
-                }
               },
               {
                 "type": "named",
                 "data": {
-                  "name": "ShooterToTrenchMode"
+                  "name": "shoot"
                 }
               }
             ]
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "Trench2PreBall"
           }
         },
         {
@@ -49,7 +36,7 @@
               {
                 "type": "path",
                 "data": {
-                  "pathName": "BottemMiddleThrogh"
+                  "pathName": "PreBallThrogh"
                 }
               },
               {
@@ -66,11 +53,55 @@
               }
             ]
           }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "CollectorRetract"
+          }
+        },
+        {
+          "type": "sequential",
+          "data": {
+            "commands": [
+              {
+                "type": "path",
+                "data": {
+                  "pathName": "PreBall2Climb"
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "ClimberUp"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "type": "sequential",
+          "data": {
+            "commands": [
+              {
+                "type": "path",
+                "data": {
+                  "pathName": "ClimbSet2Climb"
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "Climb"
+                }
+              }
+            ]
+          }
         }
       ]
     }
   },
   "resetOdom": true,
-  "folder": "Mid",
+  "folder": null,
   "choreoAuto": false
 }

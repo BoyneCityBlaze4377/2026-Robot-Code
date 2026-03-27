@@ -3,13 +3,13 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 0.39112048192771065,
-        "y": 6.865277108433735
+        "x": 0.4032952924393719,
+        "y": 7.224379457917262
       },
       "prevControl": null,
       "nextControl": {
-        "x": 0.38000526847649063,
-        "y": 6.60777779444384
+        "x": 0.3921800789881519,
+        "y": 6.9668801439273675
       },
       "isLocked": false,
       "linkedName": "PreBall"
@@ -25,7 +25,7 @@
       },
       "nextControl": null,
       "isLocked": false,
-      "linkedName": null
+      "linkedName": "PreBallEnd"
     }
   ],
   "rotationTargets": [],
@@ -55,13 +55,13 @@
     "unlimited": false
   },
   "goalEndState": {
-    "velocity": 0,
+    "velocity": 1.0,
     "rotation": -90.0
   },
   "reversed": false,
   "folder": null,
   "idealStartingState": {
-    "velocity": 0,
+    "velocity": 1.0,
     "rotation": -90.0
   },
   "useDefaultConstraints": true

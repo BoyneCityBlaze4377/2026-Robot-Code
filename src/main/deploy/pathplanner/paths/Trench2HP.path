@@ -3,13 +3,13 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 3.65,
-        "y": 0.6515406562054205
+        "x": 4.336647646219685,
+        "y": 0.6774179743223976
       },
       "prevControl": null,
       "nextControl": {
-        "x": 4.159206373245466,
-        "y": 0.6359777898297819
+        "x": 4.8458540194651505,
+        "y": 0.6618551079467591
       },
       "isLocked": false,
       "linkedName": "TrenchBottem"
@@ -48,7 +48,7 @@
   "folder": "Starts",
   "idealStartingState": {
     "velocity": 0,
-    "rotation": 180.0
+    "rotation": 0.0
   },
   "useDefaultConstraints": true
 }
