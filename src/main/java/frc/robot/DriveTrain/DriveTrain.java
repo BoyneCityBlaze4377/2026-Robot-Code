@@ -3,6 +3,7 @@ package frc.robot.DriveTrain;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.BooleanSupplier;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 
@@ -17,6 +18,7 @@ import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.config.PIDConstants;
 import com.pathplanner.lib.config.RobotConfig;
 import com.pathplanner.lib.controllers.PPHolonomicDriveController;
+import com.pathplanner.lib.util.PathPlannerLogging;
 import com.studica.frc.AHRS;
 import com.studica.frc.AHRS.NavXComType;
 
@@ -106,11 +108,11 @@ public class DriveTrain extends SubsystemBase {
   private DriveTrainZoneState currentZone = DriveTrainZoneState.AllianceZone;
   public DriveTrainMode currentMode = DriveTrainMode.TELEOP_DEFAULT;
 
-  private AdvancedPose2D initialPose = FieldConstants.neutralZone.getTR(), lastPose;
+  private AdvancedPose2D initialPose = new AdvancedPose2D(), lastPose;
   private ChassisSpeeds currentSpeeds = new ChassisSpeeds();
 
   private boolean fieldOrientation = true, isBrake = true, autonInRange = false, notified = false, 
-                  crash = false, hasCrashed = false;
+                  crash = false, hasCrashed = false, isCollecting = false, isShooting = false;
 
   private double tx, ty, ta, tID, heading, x, y, omega;
   private int periodicTimer = 1;
@@ -336,9 +338,12 @@ public class DriveTrain extends SubsystemBase {
                                                                       frontCamEstPos.get().timestampSeconds);
     if (!sideCamEstPos.isEmpty()) poseEstimator.addVisionMeasurement(sideCamEstPos.get().estimatedPose.toPose2d(), 
                                                                      sideCamEstPos.get().timestampSeconds);
-                                                                     
+
     // Field Displaying
     estimateField.setRobotPose(new Pose2d(poseEstimator.getEstimatedPosition().getTranslation(), getHeading()));
+
+    /* PPLogging */
+    PathPlannerLogging.setLogActivePathCallback((poses) -> estimateField.getObject("Current PP Path").setPoses(poses));
 
     /** Dashboard Posting */
     robotHeading.setDouble(heading);
@@ -380,21 +385,29 @@ public class DriveTrain extends SubsystemBase {
                    DriveTrainZoneState.NeutralZone);
 
     //Crash detection
-    if (crashDetectDebouncer.calculate(Math.abs(getJerk()) > DriveConstants.jerkCrashTheshold)) {
-      poseEstimator.setVisionMeasurementStdDevs(AutoAimConstants.poseEstimateCrashVisionStdDev);
-      crash = true;
-      hasCrashed = true;
-    } else if (crash) {
-      poseEstimator.setVisionMeasurementStdDevs(AutoAimConstants.poseEstimateVisionStdDev);
-      crash = false;
-    }
+    // if (crashDetectDebouncer.calculate(Math.abs(getJerk()) > DriveConstants.jerkCrashTheshold)) {
+    //   poseEstimator.setVisionMeasurementStdDevs(AutoAimConstants.poseEstimateCrashVisionStdDev);
+    //   crash = true;
+    //   hasCrashed = true;
+    // } else if (crash) {
+    //   poseEstimator.setVisionMeasurementStdDevs(AutoAimConstants.poseEstimateVisionStdDev);
+    //   crash = false;
+    // }
 
-    lastAccel.setValueAndTime(getAcceleration(), Robot.getRobotTime());
+    // lastAccel.setValueAndTime(getAcceleration(), Robot.getRobotTime());
     lastPose = new AdvancedPose2D(getPose());
 
     if (hasCrashed && lastAccel.getValue() < .01) {
       //setToVisionPos();
       hasCrashed = false;
+    }
+
+    if (isShooting) {
+      currentMode = DriveTrainMode.TELEOP_SHOOTING;
+    } else if (isCollecting) {
+      currentMode = DriveTrainMode.TELEOP_COLLECTING;
+    } else {
+      currentMode = DriveTrainMode.TELEOP_DEFAULT;
     }
 
     periodicTimer++;
@@ -425,6 +438,9 @@ public class DriveTrain extends SubsystemBase {
 
 
     setModuleStates(swerveModuleStates);
+
+    SmartDashboard.putString("DriveTrainMode", currentMode.toString());
+
   }
 
   /**
@@ -435,6 +451,7 @@ public class DriveTrain extends SubsystemBase {
    * @param rot Angular rate of the robot.
    */
   public void teleopDrive(double xSpeed, double ySpeed, double rot) {
+    fieldOrientation = true;
     //rot = Math.pow(rot, 3);
 
     double tempX = MathUtil.applyDeadband(xSpeed, DriveConstants.translationalDeadband);
@@ -443,10 +460,10 @@ public class DriveTrain extends SubsystemBase {
 
     x = tempX * DriveConstants.maxSpeedMetersPerSecond * pickSpeedScaler();
     y = tempY * DriveConstants.maxSpeedMetersPerSecond * pickSpeedScaler();
-    omega = (currentMode == DriveTrainMode.TELEOP_COLLECTING ? 
-                headingController.calculate(getHeading().getDegrees(), Math.atan2(y, x)) : 
-                tempOmega * DriveConstants.maxRotationSpeedRadiansPerSecond) 
-             * pickSpeedScaler();
+    omega = (isCollecting ?  
+                (y < 1e-6 && x < 1e-6 ? 0 : headingController.calculate(getHeading().getDegrees(), Math.atan2(y, x))) : 
+                  tempOmega * DriveConstants.maxRotationSpeedRadiansPerSecond)
+              * pickSpeedScaler();
   }
 
   /**
@@ -473,10 +490,16 @@ public class DriveTrain extends SubsystemBase {
    * @param speeds The desired ChassisSpeeds of the {@link DriveTrain}
    */
   public void chassisSpeedDrive(ChassisSpeeds speeds) {
-    brakeAll();
     x = speeds.vxMetersPerSecond;
     y = speeds.vyMetersPerSecond;
     omega = speeds.omegaRadiansPerSecond;
+  }
+
+  public void PPDrive(ChassisSpeeds speeds) {
+    x = speeds.vxMetersPerSecond;
+    y = speeds.vyMetersPerSecond;
+    omega = speeds.omegaRadiansPerSecond;
+    fieldOrientation = false;
   }
 
   /**
@@ -636,7 +659,6 @@ public class DriveTrain extends SubsystemBase {
       for (PhotonTrackedTarget t : targets) {
         totalX += t.getBestCameraToTarget().getX();
         totalY += t.getBestCameraToTarget().getY();
-        
       }
       // Potentially change to median rather than mean
       targetMeanPos = new AdvancedPose2D(totalX / targets.size(), totalY / targets.size());
@@ -676,23 +698,13 @@ public class DriveTrain extends SubsystemBase {
   }
 
   public double pickSpeedScaler() {
-    double speedScaler = DriveConstants.defaultSpeedScaler;
-
-    switch (currentMode) {
-      case TELEOP_DEFAULT:
-        speedScaler = DriveConstants.defaultSpeedScaler;
-        break;
-      case TELEOP_SHOOTING:
-        speedScaler = DriveConstants.shootingSpeedScaler;
-        break;
-      case TELEOP_COLLECTING:
-        speedScaler = DriveConstants.collectionSpeedScaler;
-        break;
-      default:
-        speedScaler = DriveConstants.defaultSpeedScaler;
-        break;
+    if (isShooting) {
+      return DriveConstants.shootingSpeedScaler;
+    } else if (isCollecting) {
+      return DriveConstants.collectionSpeedScaler;
+    } else {
+      return DriveConstants.defaultSpeedScaler;
     }
-      return speedScaler;
   }
 
   /**
@@ -827,6 +839,14 @@ public class DriveTrain extends SubsystemBase {
 
   public void setCurrentMode(DriveTrainMode newMode) {
     currentMode = newMode;
+  }
+
+  public void setIsShooting(BooleanSupplier shooting) {
+    isShooting = shooting.getAsBoolean();
+  }
+
+  public void setIsCollecting(BooleanSupplier collecting) {
+    isCollecting = collecting.getAsBoolean();
   }
 
   /** COMMANDS */

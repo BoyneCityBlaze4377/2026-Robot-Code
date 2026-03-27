@@ -69,11 +69,8 @@ public class Climber extends SubsystemBase {
 
     setpoint = m_desiredState.position;
     moveClimber();
-    
-    SmartDashboard.putNumber("ClimberPos", m_climberMotor.getPosition().getValueAsDouble());
-    SmartDashboard.putString("TestingShot", ShooterMath.calcDesiredState(new AdvancedPose2D(3, 3), 
-        ChassisSpeeds.fromFieldRelativeSpeeds(0, 0, 0, new Rotation2d()), 
-        new Vector3D(), FieldConstants.hubPosition, 6).toString());
+
+    SmartDashboard.putString("ClimberMode", getCurrentMode().toString());
   }
 
   public void configDefaults() {
@@ -117,6 +114,10 @@ public class Climber extends SubsystemBase {
 
   private void TEMPCLIMBDOWN() {
     climberSpeed = .1;
+  }
+
+  public ClimberMode getCurrentMode() {
+    return mode;
   }
 
   public Command SetClimbMode(ClimberMode mode) {

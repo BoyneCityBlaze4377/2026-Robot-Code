@@ -84,11 +84,9 @@ public class Collector extends SubsystemBase {
     moveCollector(isResisted(jostlingEnabled));
     runHarvester(m_desiredState.velocity);
 
-    SmartDashboard.putNumber("DeployMotor Pos", m_deployMotor.getPosition().getValueAsDouble() 
-    * CollectorConstants.deployConversionFactor);
-    SmartDashboard.putNumber("DeploySP", getCollectorPos());
-
     m_currentState = new CollectorState(getCollectorPos(), m_collectorMotor.get());
+    SmartDashboard.putString("CollectorMode", getCurrentMode().toString());
+
   }
 
   public void configMotorDefaults() {
@@ -127,6 +125,10 @@ public class Collector extends SubsystemBase {
 
   public double getCollectorPos() {
     return m_deployMotor.getPosition().getValueAsDouble() * CollectorConstants.deployConversionFactor;
+  }
+
+  public CollectorMode getCurrentMode() {
+    return currentMode;
   }
 
   // public double getJostleSpeed(double time) {

@@ -81,4 +81,12 @@ public class ShooterMath {
                             - Vector3D.fromPoints(position, trenchPos).getXYAngle().getDegrees()) 
                <= AutoAimConstants.trenchAngleThreshold;
     }
+
+    public static double getVelocityFromMotorOutput(double motorOutput) {
+        return 10.5 * Math.pow(motorOutput, 2) + 27.1 * motorOutput - .881;
+    }
+
+    public static double getMotorOutputFromVelocity(double velocity) {
+        return (Math.sqrt(42 * velocity + 771.412) - 27.1) / 21;
+    }
 }

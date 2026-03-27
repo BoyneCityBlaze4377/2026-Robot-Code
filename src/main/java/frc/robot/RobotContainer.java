@@ -2,10 +2,13 @@ package frc.robot;
 
 import java.util.function.Supplier;
 
+import com.ctre.phoenix6.swerve.jni.SwerveJNI.DriveState;
 import com.pathplanner.lib.auto.NamedCommands;
 
 import choreo.auto.AutoFactory;
 import edu.wpi.first.wpilibj.Joystick;
+import edu.wpi.first.wpilibj.event.EventLoop;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
@@ -46,10 +49,17 @@ public class RobotContainer {
   private final Joystick m_driverStick = new Joystick(IOConstants.driverControllerID);
   private final Joystick m_tempStick = new Joystick(1);
 
+  private final HubStatusMonitor hubStatusMonitor = new HubStatusMonitor(m_tempStick);
+
   private final Supplier<DriveTrainMode> changeToDefaultOrNot = () -> (m_shooter.getCurrentMode() == ShooterMode.SHOOTING || 
-                                                                        m_shooter.getCurrentMode() == ShooterMode.AIMING ? 
+                                                                       m_shooter.getCurrentMode() == ShooterMode.AIMING ? 
                                                                        DriveTrainMode.TELEOP_SHOOTING : 
                                                                        DriveTrainMode.TELEOP_DEFAULT);
+  private final Supplier<ShooterMode> changeToShooterIdleOrNot = () -> (m_collector.getCurrentMode() == CollectorMode.COLLECTING
+                                                                        ? ShooterMode.AIMING : ShooterMode.IDLE);
+  private final Supplier<DriveTrainMode> changeToCollectingOrNot = () -> (m_collector.getCurrentMode() == CollectorMode.COLLECTING
+                                                                          ? DriveTrainMode.TELEOP_COLLECTING
+                                                                          : DriveTrainMode.TELEOP_DEFAULT);
 
   // public final Command TeleopDrive = m_driveTrain.TeleopDrive(() -> -m_tempStick.getRawAxis(IOConstants.xAxis), 
   //                                                             () -> -m_tempStick.getRawAxis(IOConstants.yAxis),
@@ -90,15 +100,17 @@ public class RobotContainer {
    * joysticks}.
    */
   private void configureBindings() {
-    new JoystickButton(m_tempStick, 6).whileTrue(Commands.repeatingSequence(
-      m_shooter.SetShooterMode(ShooterMode.SHOOTING)).alongWith(m_driveTrain.SetDriveTrainMode(DriveTrainMode.TELEOP_SHOOTING)));
+    // new Trigger(m_tempStick.axisGreaterThan(3, .2, new EventLoop())).whileTrue(
+    //   Commands.repeatingSequence(m_shooter.SetShooterMode(ShooterMode.SHOOTING))).onFalse(
+    //   m_shooter.SetShooterMode(ShooterMode.IDLE));
+
+    new JoystickButton(m_tempStick, 6).whileTrue(
+      Commands.repeatingSequence(m_shooter.SetShooterMode(ShooterMode.SHOOTING))).onFalse(
+      m_shooter.SetShooterMode(ShooterMode.IDLE));
 
     new JoystickButton(m_tempStick, 1).onTrue(
-      m_collector.SetCollectorMode(CollectorMode.COLLECTING).alongWith(
-        m_driveTrain.SetDriveTrainMode(DriveTrainMode.TELEOP_COLLECTING)).alongWith(
-        m_shooter.SetShooterMode(ShooterMode.AIMING))).onFalse(
-      m_collector.SetCollectorMode(CollectorMode.RETRACTED).alongWith(
-        m_driveTrain.SetDriveTrainMode(changeToDefaultOrNot)));
+      m_collector.SetCollectorMode(CollectorMode.COLLECTING)).onFalse(
+      m_collector.SetCollectorMode(CollectorMode.RETRACTED));
 
     new JoystickButton(m_tempStick, 4).onTrue(m_climber.SetClimbMode(ClimberMode.UP));
     new JoystickButton(m_tempStick, 2).onTrue(m_climber.SetClimbMode(ClimberMode.DOWN));
@@ -118,6 +130,15 @@ public class RobotContainer {
     NamedCommands.registerCommand("ClimberUp", m_climber.SetClimbMode(ClimberMode.UP));
     NamedCommands.registerCommand("ClimberDown", m_climber.SetClimbMode(ClimberMode.DOWN));
     NamedCommands.registerCommand("Climb", m_climber.SetClimbMode(ClimberMode.CLIMB));
+  }
+
+  public void periodic() {
+    m_driveTrain.setIsCollecting(() -> m_collector.getCurrentMode() == CollectorMode.COLLECTING);
+    m_driveTrain.setIsShooting(() -> m_shooter.getCurrentMode() == ShooterMode.SHOOTING);
+
+    m_shooter.setIsCollecting(() -> m_collector.getCurrentMode() == CollectorMode.COLLECTING);
+
+    hubStatusMonitor.update();
   }
 
   /**
