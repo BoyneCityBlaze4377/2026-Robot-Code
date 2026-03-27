@@ -81,6 +81,7 @@ public class RobotContainer {
   
   /** The container for the robot. Contains subsystems, OI devices, and commands. */
   public RobotContainer() {
+    NamedCommands.registerCommand("shoot", m_shooter.runIndex());
     //Configure the trigger bindings
     configureBindings();
     registerPathPlannerNamedCommands();
@@ -148,6 +149,7 @@ public class RobotContainer {
    */
   public Command getAutonomousCommand() {
     // An example command will be run in autonomous
+    // return null;
     return null;
   }
 }

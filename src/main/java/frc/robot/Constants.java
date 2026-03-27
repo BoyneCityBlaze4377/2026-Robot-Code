@@ -351,13 +351,13 @@ public final class Constants {
   public class AutonConstants {
     public static RobotConfig robotConfig;
 
-    public static final double PPtranskP = 2;//2
-    public static final double PPtranskI = 0;
-    public static final double PPtranskD = 0;
+    public static final double PPtranskP = 3; //2
+    public static final double PPtranskI = 0; //0
+    public static final double PPtranskD = .025; //0
 
-    public static final double PPturnkP = 4.5;//4.5
-    public static final double PPturnkI = .355;//.355
-    public static final double PPturnkD = 0;
+    public static final double PPturnkP = 4.5; //4.5
+    public static final double PPturnkI = 0; //.355
+    public static final double PPturnkD = 0; //0
   }
 
   public class SensorConstants {

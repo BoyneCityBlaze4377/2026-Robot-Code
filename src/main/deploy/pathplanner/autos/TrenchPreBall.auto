@@ -13,12 +13,6 @@
                 "data": {
                   "pathName": "Trench2PreBall"
                 }
-              },
-              {
-                "type": "named",
-                "data": {
-                  "name": "ShootWMoving"
-                }
               }
             ]
           }
@@ -31,18 +25,6 @@
                 "type": "path",
                 "data": {
                   "pathName": "PreBallThrogh"
-                }
-              },
-              {
-                "type": "named",
-                "data": {
-                  "name": "Collect"
-                }
-              },
-              {
-                "type": "named",
-                "data": {
-                  "name": "ShootWMoving"
                 }
               }
             ]
