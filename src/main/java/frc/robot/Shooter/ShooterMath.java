@@ -45,12 +45,13 @@ public class ShooterMath {
         Vector3D currentVelocity = driveTrainVelocityVector; //new Vector3D(new AdvancedPose2D().withVector(driveTrainPos.getRotation(), 
             //new Translation2d(currentVelocity2D.getX(), currentVelocity2D.getY()), new Rotation2d()));
                                                 
-        Vector3D turretAimVector = Vector3D.fromPoints(currentPosition3D, targetPose);//.minus(currentVelocity);
+        Vector3D turretAimVector = Vector3D.fromPoints(currentPosition3D, targetPose).minus(currentVelocity);
         Rotation2d turretAngle = turretAimVector.getXYAngle().minus(driveTrainPos.getRotation());
+
+        SmartDashboard.putString("vec", turretAimVector.toString());
 
         double horizDistance = new AdvancedPose2D(targetPose).getDistance(currentPosition);
         double vertDistance = targetPose.getZ() - currentPosition3D.getZ();
-
 
         double a = -4.9 * Math.pow(horizDistance / shotVelocity, 2);
         double b = horizDistance;
@@ -60,8 +61,8 @@ public class ShooterMath {
 
         Rotation2d hoodAngle = Rotation2d.fromRadians(Math.atan(quadFormSolution));
 
-        if (true//90 - hoodAngle.getDegrees() <= 90 - ShooterConstants.minHoodHeight || Math.abs(hoodAngle.getDegrees()) > 1e9
-        ) {
+        if (90 - hoodAngle.getDegrees() <= 90 - ShooterConstants.minHoodHeight || 
+                Double.isNaN(Math.abs(hoodAngle.getDegrees()))) {
             hoodAngle = Rotation2d.fromDegrees(90 - ShooterConstants.minHoodHeight + .5);
             shotVelocity = findVFromThetaAndD(hoodAngle, horizDistance);
         }

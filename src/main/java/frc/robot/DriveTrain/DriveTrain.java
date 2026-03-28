@@ -108,7 +108,7 @@ public class DriveTrain extends SubsystemBase {
   private DriveTrainZoneState currentZone = DriveTrainZoneState.AllianceZone;
   public DriveTrainMode currentMode = DriveTrainMode.TELEOP_DEFAULT;
 
-  private AdvancedPose2D initialPose = new AdvancedPose2D(1.5, 3.5), lastPose;
+  private AdvancedPose2D initialPose = new AdvancedPose2D(13, 1), lastPose;
   private ChassisSpeeds currentSpeeds = new ChassisSpeeds();
 
   private boolean fieldOrientation = true, isBrake = true, autonInRange = false, notified = false, 
@@ -302,10 +302,10 @@ public class DriveTrain extends SubsystemBase {
       e.printStackTrace();
     }
 
-    AutoBuilder.configure(this :: getPose,
-                          this :: setInitialPose,
-                          this :: getChassisSpeeds, 
-                          this :: PPDrive,
+    AutoBuilder.configure(this::getPose,
+                          this::setInitialPose,
+                          this::getChassisSpeeds, 
+                          this::PPDrive,
                           new PPHolonomicDriveController(
                             new PIDConstants(AutonConstants.PPtranskP ,AutonConstants.PPtranskI,AutonConstants.PPtranskD),
                             new PIDConstants(AutonConstants.PPturnkP, AutonConstants.PPturnkI, AutonConstants.PPturnkD)), 
@@ -330,7 +330,9 @@ public class DriveTrain extends SubsystemBase {
 
     /* Pose Estimation */
     //LimeLight
-    Optional<PoseEstimate> LLEstPos = Optional.of(LimelightHelpers.getBotPoseEstimate_wpiBlue(limeLightName));
+    Optional<PoseEstimate> LLEstPos = Optional.of(DriverStation.getAlliance().get() == Alliance.Red ? 
+      LimelightHelpers.getBotPoseEstimate_wpiRed(limeLightName) : 
+      LimelightHelpers.getBotPoseEstimate_wpiBlue(limeLightName));
 
     //PhotonVision
     PhotonPipelineResult FCResult = m_frontCam.getLatestResult();
@@ -344,15 +346,17 @@ public class DriveTrain extends SubsystemBase {
     //Final Updating
     poseEstimator.update(getHeading(), getSwerveModulePositions());
     if (LLEstPos.get().tagCount >= 1) {
-      Pose2d LLEST = LLEstPos.get().pose;
-      AdvancedPose2D EST = new AdvancedPose2D(LLEST);
-      if (DriverStation.getAlliance().get()==Alliance.Red) {
-        EST = new AdvancedPose2D(LLEST).flipBoth();
-      }
-      poseEstimator.addVisionMeasurement(EST, 
+      // Pose2d LLEST = LLEstPos.get().pose;
+      // AdvancedPose2D EST = new AdvancedPose2D(LLEST);
+      // if (DriverStation.getAlliance().get()==Alliance.Red) {
+      //   EST = new AdvancedPose2D(LLEST).flipBoth();
+      // }
+
+      poseEstimator.addVisionMeasurement(LLEstPos.get().pose, 
                                          LLEstPos.get().timestampSeconds);
       estimateField.getObject("LLEST").setPose(LLEstPos.get().pose);
     }
+
     if (!frontCamEstPos.isEmpty()) poseEstimator.addVisionMeasurement(frontCamEstPos.get().estimatedPose.toPose2d(), 
                                                                       frontCamEstPos.get().timestampSeconds);
     if (!sideCamEstPos.isEmpty()) poseEstimator.addVisionMeasurement(sideCamEstPos.get().estimatedPose.toPose2d(), 
@@ -487,7 +491,7 @@ public class DriveTrain extends SubsystemBase {
     y = tempY * DriveConstants.maxSpeedMetersPerSecond * pickSpeedScaler();
     omega = tempOmega * DriveConstants.maxRotationSpeedRadiansPerSecond * pickSpeedScaler();
     // (isCollecting ?  
-    //             (y < 1e-6 && x < 1e-6 ? 0 : headingController.calculate(getHeading().getDegrees(), Math.atan2(y, x))) : 
+    //             (y < 1e-6 && x < 1e-6 ? 0 : headingController.calculate(getHeading().getRadians(), Math.atan2(y, x))) : 
     //               tempOmega * DriveConstants.maxRotationSpeedRadiansPerSecond)
     //           * pickSpeedScaler();
   }
