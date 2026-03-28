@@ -21,8 +21,10 @@ import com.revrobotics.spark.config.SparkMaxConfig;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -37,7 +39,6 @@ import frc.Lib.Vector3D;
 import frc.robot.Constants.AutoAimConstants;
 import frc.robot.Constants.FieldConstants;
 import frc.robot.Constants.ShooterConstants;
-import frc.robot.Constants.TurretShotConstants;
 import frc.robot.DriveTrain.DriveTrain;
 import frc.robot.DriveTrain.DriveTrain.DriveTrainZoneState;
 
@@ -154,6 +155,10 @@ public class Shooter extends SubsystemBase {
 
     boolean trenchFlag = ShooterMath.tooCloseToTrench(driveTrainPos, closestTrench) &&
                          ShooterMath.movingTowardsTrench(driveTrainPos, driveTrainSpeeds, closestTrench);
+
+    currentPosition = driveTrainPos.withVector(driveTrainPos.getRotation(), 
+                                                AutoAimConstants.turretOffsetCoordinates.getTranslation(), 
+                                                new Rotation2d());
                                                 
     Pose3d targetPose = currentZone == DriveTrainZoneState.AllianceZone ? FieldConstants.hubPosition : 
                           new Pose3d(currentPosition.getClosest(FieldConstants.leftShuttleTarget, 
@@ -202,9 +207,9 @@ public class Shooter extends SubsystemBase {
         break;
     }
 
-    aimTurret(m_desiredState.angleToTarget);
-    angleHood(m_desiredState.shotPitch);
-    revFlywheel(m_desiredState.shotVelocity);
+    // aimTurret(m_desiredState.angleToTarget);
+    // angleHood(m_desiredState.shotPitch);
+    // revFlywheel(m_desiredState.shotVelocity);
     if (m_desiredState.isShooting) {
       runIndexers();
     } else {
@@ -224,6 +229,7 @@ public class Shooter extends SubsystemBase {
 
     SmartDashboard.putString("ShooterMode", currentMode.toString());
     SmartDashboard.putString("Shooter Desired State", m_desiredState.toString());
+    SmartDashboard.putString("ShooterStateToTarget", stateToTarget.toString());
 
     simField.getObject("Turret pos").setPose(currentPosition.withRotation(m_desiredState.angleToTarget));
     simField.getObject("Target").setPose(targetPose.toPose2d());
@@ -335,17 +341,14 @@ public class Shooter extends SubsystemBase {
 
   public void aimTurret(Rotation2d desiredAngle) {
     double target = desiredAngle.getDegrees();// - driveTrainPos.getRotation().getDegrees();
-    simField.getObject("TurretPos").setPose(currentPosition.withRotation(Rotation2d.fromDegrees(target)));
     target = MathUtil.inputModulus(target, -45, 315);
 
-    if (DriverStation.isTeleop()) target = 90;
+    // if (DriverStation.isTeleop()) target = 90;
 
     m_turret.set(BlazeMath.clampMagnitude(Math.abs(getTurretPos() - target) > ShooterConstants.moveTypeThreshold
                                             ? m_bigMoveAimingController.calculate(getTurretPos(), target) 
                                             : m_fineTuneAimingController.calculate(getTurretPos(), target),
                                 ShooterConstants.maxTurretOutput));
-
-    SmartDashboard.putBoolean("Big", Math.abs(getTurretPos() - target) > ShooterConstants.moveTypeThreshold);
 
     SmartDashboard.putNumber("Aiming Factor", BlazeMath.clampMagnitude((Math.abs(getTurretPos() - target) > ShooterConstants.moveTypeThreshold
                                             ? m_bigMoveAimingController.calculate(getTurretPos(), target) 
@@ -353,7 +356,6 @@ public class Shooter extends SubsystemBase {
                                 ShooterConstants.maxTurretOutput));
 
     SmartDashboard.putNumber("FilteredDesTurPos", target);
-
   }
 
   public void angleHood(Rotation2d desiredAngle) {

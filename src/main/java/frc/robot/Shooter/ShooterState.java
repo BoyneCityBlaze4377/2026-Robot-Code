@@ -1,6 +1,7 @@
 package frc.robot.Shooter;
 
 import edu.wpi.first.math.geometry.Rotation2d;
+import frc.robot.Constants.ShooterConstants;
 
 /** Add your docs here. */
 public class ShooterState {
@@ -16,7 +17,7 @@ public class ShooterState {
     }
 
     public ShooterState(Rotation2d angle, double velocity) {
-        this(angle, new Rotation2d(), velocity, false);
+        this(angle, Rotation2d.fromDegrees(90 - ShooterConstants.minHoodHeight), velocity, false);
     }
 
     public ShooterState(Rotation2d angle) {

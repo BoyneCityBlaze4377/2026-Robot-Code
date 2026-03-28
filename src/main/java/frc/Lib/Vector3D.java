@@ -84,7 +84,7 @@ public class Vector3D {
     }
 
     public Rotation2d getXYAngle() {
-        return (getY() < 1e-6 && getX() < 1e-6 ? new Rotation2d() : Rotation2d.fromRadians(Math.atan2(getY(), getX()))); 
+        return (Math.abs(getY()) < 1e-6 && Math.abs(getX()) < 1e-6 ? new Rotation2d() : Rotation2d.fromRadians(Math.atan2(getY(), getX()))); 
     }
 
     public double getX() {
@@ -97,5 +97,9 @@ public class Vector3D {
 
     public double getZ() {
         return z;
+    }
+
+    public String toString() {
+        return "Vector3D(X: " + getX() + ", Y: " + getY() + ", Z: " + getZ() + ")";
     }
 }
