@@ -55,7 +55,7 @@ public class Collector extends SubsystemBase {
 
     setpoint = getCollectorPos();
 
-    m_deployMotor.setPosition(0);
+    m_deployMotor.setPosition(CollectorConstants.retractedPos);
   }
 
   @Override

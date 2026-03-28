@@ -40,7 +40,7 @@ public class RobotContainer {
                                                 m_driveTrain::getAngularVelocityVector,
                                                 m_driveTrain::getCurrentZone);
   private final Collector m_collector = new Collector();
-  private final Climber m_climber = new Climber();
+  //private final Climber m_climber = new Climber();
 
   private final AutoFactory m_autoFactory = new AutoFactory(m_driveTrain::getPose, 
                                                             m_driveTrain::setInitialPose, 
@@ -115,9 +115,9 @@ public class RobotContainer {
       m_collector.SetCollectorMode(CollectorMode.COLLECTING)).onFalse(
       m_collector.SetCollectorMode(CollectorMode.RETRACTED));
 
-    new JoystickButton(m_tempStick, 4).onTrue(m_climber.SetClimbMode(ClimberMode.UP));
-    new JoystickButton(m_tempStick, 2).onTrue(m_climber.SetClimbMode(ClimberMode.DOWN));
-    new JoystickButton(m_tempStick, 3).onTrue(m_climber.SetClimbMode(ClimberMode.CLIMB));
+    // new JoystickButton(m_tempStick, 4).onTrue(m_climber.SetClimbMode(ClimberMode.UP));
+    // new JoystickButton(m_tempStick, 2).onTrue(m_climber.SetClimbMode(ClimberMode.DOWN));
+    // new JoystickButton(m_tempStick, 3).onTrue(m_climber.SetClimbMode(ClimberMode.CLIMB));
   }
 
   private void registerPathPlannerNamedCommands() {
@@ -130,9 +130,9 @@ public class RobotContainer {
     NamedCommands.registerCommand("CollectorRetract", m_collector.SetCollectorMode(CollectorMode.RETRACTED));
     NamedCommands.registerCommand("CollectorJostle", m_collector.SetCollectorMode(CollectorMode.JOSTLING));
 
-    NamedCommands.registerCommand("ClimberUp", m_climber.SetClimbMode(ClimberMode.UP));
-    NamedCommands.registerCommand("ClimberDown", m_climber.SetClimbMode(ClimberMode.DOWN));
-    NamedCommands.registerCommand("Climb", m_climber.SetClimbMode(ClimberMode.CLIMB));
+    // NamedCommands.registerCommand("ClimberUp", m_climber.SetClimbMode(ClimberMode.UP));
+    // NamedCommands.registerCommand("ClimberDown", m_climber.SetClimbMode(ClimberMode.DOWN));
+    // NamedCommands.registerCommand("Climb", m_climber.SetClimbMode(ClimberMode.CLIMB));
   }
 
   public void periodic() {
@@ -151,11 +151,6 @@ public class RobotContainer {
    */
   public Command getAutonomousCommand() {
     // An example command will be run in autonomous
-    // return null;
-<<<<<<< HEAD
-    return new PathPlannerAuto("PreBall2Climb");
-=======
-    return null;
->>>>>>> c9f893ab12b0062302b088cbc4d0e2f80f2039e7
+    return new PathPlannerAuto("HopClimb");
   }
 }

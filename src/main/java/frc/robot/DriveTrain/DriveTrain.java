@@ -41,6 +41,7 @@ import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.util.sendable.Sendable;
 import edu.wpi.first.util.sendable.SendableBuilder;
 import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -107,7 +108,7 @@ public class DriveTrain extends SubsystemBase {
   private DriveTrainZoneState currentZone = DriveTrainZoneState.AllianceZone;
   public DriveTrainMode currentMode = DriveTrainMode.TELEOP_DEFAULT;
 
-  private AdvancedPose2D initialPose = new AdvancedPose2D(), lastPose;
+  private AdvancedPose2D initialPose = new AdvancedPose2D(1.5, 3.5), lastPose;
   private ChassisSpeeds currentSpeeds = new ChassisSpeeds();
 
   private boolean fieldOrientation = true, isBrake = true, autonInRange = false, notified = false, 
@@ -156,6 +157,19 @@ public class DriveTrain extends SubsystemBase {
 
     // DriveTrain GyroScope
     m_gyro = new AHRS(NavXComType.kUSB1);
+    m_gyro.reset();
+    m_gyro.reset();
+    m_gyro.reset();
+    m_gyro.reset();
+    m_gyro.reset();
+    m_gyro.reset();
+    m_gyro.reset();
+    m_gyro.reset();
+    m_gyro.reset();
+    m_gyro.reset();
+    m_gyro.reset();
+    m_gyro.reset();
+    m_gyro.reset();
     m_gyro.reset();
     m_gyro.zeroYaw();
     // m_gyro.setAngleAdjustment(initialPose.getRotation().getDegrees());
@@ -316,7 +330,7 @@ public class DriveTrain extends SubsystemBase {
 
     /* Pose Estimation */
     //LimeLight
-    Optional<PoseEstimate> LLEstPos = Optional.of(LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(limeLightName));
+    Optional<PoseEstimate> LLEstPos = Optional.of(LimelightHelpers.getBotPoseEstimate_wpiBlue(limeLightName));
 
     //PhotonVision
     PhotonPipelineResult FCResult = m_frontCam.getLatestResult();
@@ -330,8 +344,14 @@ public class DriveTrain extends SubsystemBase {
     //Final Updating
     poseEstimator.update(getHeading(), getSwerveModulePositions());
     if (LLEstPos.get().tagCount >= 1) {
-      poseEstimator.addVisionMeasurement(LLEstPos.get().pose, 
+      Pose2d LLEST = LLEstPos.get().pose;
+      AdvancedPose2D EST = new AdvancedPose2D(LLEST);
+      if (DriverStation.getAlliance().get()==Alliance.Red) {
+        EST = new AdvancedPose2D(LLEST).flipBoth();
+      }
+      poseEstimator.addVisionMeasurement(EST, 
                                          LLEstPos.get().timestampSeconds);
+      estimateField.getObject("LLEST").setPose(LLEstPos.get().pose);
     }
     if (!frontCamEstPos.isEmpty()) poseEstimator.addVisionMeasurement(frontCamEstPos.get().estimatedPose.toPose2d(), 
                                                                       frontCamEstPos.get().timestampSeconds);
@@ -340,6 +360,8 @@ public class DriveTrain extends SubsystemBase {
 
     // Field Displaying
     estimateField.setRobotPose(new Pose2d(poseEstimator.getEstimatedPosition().getTranslation(), getHeading()));
+    estimateField.getObject("LLEST").setPose(LLEstPos.get().pose);
+
 
     /* PPLogging */
     PathPlannerLogging.setLogActivePathCallback((poses) -> estimateField.getObject("Current PP Path").setPoses(poses));
@@ -376,6 +398,7 @@ public class DriveTrain extends SubsystemBase {
 
     if (frontCamEstPos.isPresent()) estimateField.getObject("PHEST").setPose(sideCamEstPos.get().estimatedPose.toPose2d());
     if (sideCamEstPos.isPresent()) estimateField.getObject("SCEST").setPose(sideCamEstPos.get().estimatedPose.toPose2d());
+
 
     // Drive Robot
     rawDrive(x , y, omega);
@@ -453,10 +476,7 @@ public class DriveTrain extends SubsystemBase {
    * @param rot Angular rate of the robot.
    */
   public void teleopDrive(double xSpeed, double ySpeed, double rot) {
-<<<<<<< HEAD
-=======
     fieldOrientation = true;
->>>>>>> c9f893ab12b0062302b088cbc4d0e2f80f2039e7
     //rot = Math.pow(rot, 3);
 
     double tempX = MathUtil.applyDeadband(xSpeed, DriveConstants.translationalDeadband);
@@ -465,10 +485,11 @@ public class DriveTrain extends SubsystemBase {
 
     x = tempX * DriveConstants.maxSpeedMetersPerSecond * pickSpeedScaler();
     y = tempY * DriveConstants.maxSpeedMetersPerSecond * pickSpeedScaler();
-    omega = (isCollecting ?  
-                (y < 1e-6 && x < 1e-6 ? 0 : headingController.calculate(getHeading().getDegrees(), Math.atan2(y, x))) : 
-                  tempOmega * DriveConstants.maxRotationSpeedRadiansPerSecond)
-              * pickSpeedScaler();
+    omega = tempOmega * DriveConstants.maxRotationSpeedRadiansPerSecond * pickSpeedScaler();
+    // (isCollecting ?  
+    //             (y < 1e-6 && x < 1e-6 ? 0 : headingController.calculate(getHeading().getDegrees(), Math.atan2(y, x))) : 
+    //               tempOmega * DriveConstants.maxRotationSpeedRadiansPerSecond)
+    //           * pickSpeedScaler();
   }
 
   /**
@@ -703,13 +724,13 @@ public class DriveTrain extends SubsystemBase {
   }
 
   public double pickSpeedScaler() {
-    if (isShooting) {
-      return DriveConstants.shootingSpeedScaler;
-    } else if (isCollecting) {
-      return DriveConstants.collectionSpeedScaler;
-    } else {
+    // if (isShooting) {
+    //   return DriveConstants.shootingSpeedScaler;
+    // } else if (isCollecting) {
+    //   return DriveConstants.collectionSpeedScaler;
+    // } else {
       return DriveConstants.defaultSpeedScaler;
-    }
+    // }
   }
 
   /**

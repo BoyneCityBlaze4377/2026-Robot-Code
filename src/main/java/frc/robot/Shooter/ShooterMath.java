@@ -9,6 +9,8 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.wpilibj.smartdashboard.Field2d;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.Lib.AdvancedPose2D;
 import frc.Lib.Vector3D;
 import frc.Lib.Zone;
@@ -20,6 +22,8 @@ import frc.robot.DriveTrain.DriveTrain.DriveTrainZoneState;
 
 /** Add your docs here. */
 public class ShooterMath {
+    public Field2d field = new Field2d();
+
     public static ShooterState calcDesiredState(AdvancedPose2D driveTrainPos, 
                                                 ChassisSpeeds driveTrainSpeeds,
                                                 Vector3D driveTrainOmega,
@@ -41,7 +45,7 @@ public class ShooterMath {
         Vector3D currentVelocity = driveTrainVelocityVector; //new Vector3D(new AdvancedPose2D().withVector(driveTrainPos.getRotation(), 
             //new Translation2d(currentVelocity2D.getX(), currentVelocity2D.getY()), new Rotation2d()));
                                                 
-        Vector3D turretAimVector = Vector3D.fromPoints(currentPosition3D, targetPose).minus(currentVelocity);
+        Vector3D turretAimVector = Vector3D.fromPoints(currentPosition3D, targetPose);//.minus(currentVelocity);
         Rotation2d turretAngle = turretAimVector.getXYAngle().minus(driveTrainPos.getRotation());
 
         double horizDistance = new AdvancedPose2D(targetPose).getDistance(currentPosition);
@@ -56,7 +60,8 @@ public class ShooterMath {
 
         Rotation2d hoodAngle = Rotation2d.fromRadians(Math.atan(quadFormSolution));
 
-        if (hoodAngle.getDegrees() <= 90 - ShooterConstants.minHoodHeight || Math.abs(hoodAngle.getDegrees()) > 1e9) {
+        if (true//90 - hoodAngle.getDegrees() <= 90 - ShooterConstants.minHoodHeight || Math.abs(hoodAngle.getDegrees()) > 1e9
+        ) {
             hoodAngle = Rotation2d.fromDegrees(90 - ShooterConstants.minHoodHeight + .5);
             shotVelocity = findVFromThetaAndD(hoodAngle, horizDistance);
         }

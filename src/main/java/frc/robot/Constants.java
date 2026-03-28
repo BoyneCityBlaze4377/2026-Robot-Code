@@ -76,7 +76,7 @@ public final class Constants {
 
   /* Constants related to how the DriveTrain moves */
   public static final class DriveConstants {
-    public static final double defaultSpeedScaler = .85;
+    public static final double defaultSpeedScaler = .9;
     public static final double shootingSpeedScaler = .25;
     public static final double collectionSpeedScaler = defaultSpeedScaler;
 
@@ -141,7 +141,7 @@ public final class Constants {
     public static final double maxModuleAngularAccelerationDegreesPerSecondSquared = maxModuleAngularSpeedDegreesPerSecond * 3;
 
     public static final double kMaxOutput = 0.1;
-    public static final double maxVoltage = 14.0;
+    public static final double maxVoltage = 12.0;//14
     public static final int angleContinuousCurrentLimit = 20;
 
     public static final double absoluteEncoderRange = .5; // [-.5, .5)
@@ -279,8 +279,8 @@ public final class Constants {
     public static final double climberMaxVoltage = 16;
     public static final double climberMaxDutyCycle = 1;
 
-    public static final double maxHeightPos = -60;
-    public static final double climbedHeightPos = -30;
+    public static final double maxHeightPos = -70;
+    public static final double climbedHeightPos = -22;
     public static final double minHeightPos = 0;
 
     public static final double climberKP = 0.012;
@@ -333,9 +333,9 @@ public final class Constants {
     public static final double turnkD = 0; //0
     public static final double turnkTolerance = .03;
 
-    private final static double turretPosX = -Units.inchesToMeters(3 + 3/4); //Right positive
-    private final static double turretPosY = -Units.inchesToMeters(6 + 1/4); //Front positive
-    private final static double turretPosZ = Units.inchesToMeters(17); //Up positive
+    private static final double turretPosX = -Units.inchesToMeters(3 + 3/4); //Right positive
+    private static final double turretPosY = -Units.inchesToMeters(6 + 1/4); //Front positive
+    private static final double turretPosZ = Units.inchesToMeters(17); //Up positive
 
     public static final AdvancedPose2D turretOffsetCoordinates = new AdvancedPose2D(turretPosX, turretPosY);
     public static final Vector3D turretOffsetPos = new Vector3D(turretPosX, turretPosY, turretPosZ);
@@ -362,7 +362,7 @@ public final class Constants {
 
   public class SensorConstants {
     /** LIMELIGHT */
-    public static final String limeLightName = "limelight";
+    public static final String limeLightName = "limelight-bcblaze";
 
     private static final double LLforward = -Units.inchesToMeters(13.75);  // meters, forward from robot center
     private static final double LLside = -Units.inchesToMeters(10 + 1/4);      // meters, left of robot center

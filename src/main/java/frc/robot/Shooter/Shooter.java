@@ -25,6 +25,7 @@ import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -33,6 +34,7 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.Lib.AdvancedPose2D;
 import frc.Lib.BlazeMath;
 import frc.Lib.Vector3D;
+import frc.robot.Constants.AutoAimConstants;
 import frc.robot.Constants.FieldConstants;
 import frc.robot.Constants.ShooterConstants;
 import frc.robot.Constants.TurretShotConstants;
@@ -128,7 +130,7 @@ public class Shooter extends SubsystemBase {
     configMotorDefaults();
 
     m_hood.setPosition(ShooterConstants.minHoodHeight / ShooterConstants.hoodConversionFactor);
-    // m_turret.setPosition(0);
+    m_turret.setPosition(0);
 
     simField = new Field2d();
 
@@ -181,7 +183,7 @@ public class Shooter extends SubsystemBase {
 
     switch (currentMode) {
       case IDLE:
-        setDesiredState(new ShooterState(stateToTarget.angleToTarget));
+        setDesiredState(new ShooterState(stateToTarget.angleToTarget).noShooting());
         break;
       case SHOOTING:
         setDesiredState(stateToTarget);
@@ -196,19 +198,22 @@ public class Shooter extends SubsystemBase {
                                          false));
         break;
       default:
-        setDesiredState(new ShooterState(stateToTarget.angleToTarget));
+        setDesiredState(new ShooterState(stateToTarget.angleToTarget).noShooting());
         break;
     }
 
     aimTurret(m_desiredState.angleToTarget);
-<<<<<<< HEAD
-    // angleHood(m_desiredState.shotPitch);
-    setVelocity(m_desiredState.shotVelocity); 
-=======
     angleHood(m_desiredState.shotPitch);
     revFlywheel(m_desiredState.shotVelocity);
->>>>>>> c9f893ab12b0062302b088cbc4d0e2f80f2039e7
-    if (m_desiredState.isShooting) runIndexers();
+    if (m_desiredState.isShooting) {
+      runIndexers();
+    } else {
+      stopIndexers();
+    }
+
+    AdvancedPose2D currentPosition = driveTrainPos.withVector(driveTrainPos.getRotation(), 
+                                                AutoAimConstants.turretOffsetCoordinates.getTranslation(), 
+                                                new Rotation2d());
 
     simField.setRobotPose(driveTrainPos);
 
@@ -216,12 +221,13 @@ public class Shooter extends SubsystemBase {
                                       Rotation2d.fromDegrees(90 - getHoodPos()), 
                                       getVelocity(),
                                       m_desiredState.isShooting);
-<<<<<<< HEAD
-=======
 
-    SmartDashboard.putString("ShooterMode", getCurrentMode().toString());
+    SmartDashboard.putString("ShooterMode", currentMode.toString());
+    SmartDashboard.putString("Shooter Desired State", m_desiredState.toString());
 
->>>>>>> c9f893ab12b0062302b088cbc4d0e2f80f2039e7
+    simField.getObject("Turret pos").setPose(currentPosition.withRotation(m_desiredState.angleToTarget));
+    simField.getObject("Target").setPose(targetPose.toPose2d());
+    SmartDashboard.putData("shoot field",simField);
   }
 
   public void configMotorDefaults() {
@@ -278,8 +284,11 @@ public class Shooter extends SubsystemBase {
   }
 
   public void revFlywheel(double shotVelocity) {
-    double velocity = ShooterMath.getMotorOutputFromVelocity(shotVelocity);
-    genericShoot(velocity + ShooterConstants.velocityAddOn);
+    // double targetVelocity = ShooterMath.getMotorOutputFromVelocity(shotVelocity);
+    // double velocity = targetVelocity < 0 ? 0 : targetVelocity;
+    genericShoot(.6//velocity + ShooterConstants.velocityAddOn
+    );
+    // SmartDashboard.putNumber("vel", velocity);
   }
 
   private void runSpindexer() {
@@ -329,6 +338,8 @@ public class Shooter extends SubsystemBase {
     simField.getObject("TurretPos").setPose(currentPosition.withRotation(Rotation2d.fromDegrees(target)));
     target = MathUtil.inputModulus(target, -45, 315);
 
+    if (DriverStation.isTeleop()) target = 90;
+
     m_turret.set(BlazeMath.clampMagnitude(Math.abs(getTurretPos() - target) > ShooterConstants.moveTypeThreshold
                                             ? m_bigMoveAimingController.calculate(getTurretPos(), target) 
                                             : m_fineTuneAimingController.calculate(getTurretPos(), target),
@@ -350,6 +361,7 @@ public class Shooter extends SubsystemBase {
 
     //m_hood.set(m_hoodController.calculate(getHoodPos(), target));
     SmartDashboard.putNumber("HoodTarget", target);
+    SmartDashboard.putNumber("hoodpos", getHoodPos());
   }
 
   public Command runIndex() {
