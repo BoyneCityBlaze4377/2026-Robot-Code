@@ -29,12 +29,14 @@ import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.filter.Debouncer;
+import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.GenericEntry;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
@@ -116,6 +118,9 @@ public class DriveTrain extends SubsystemBase {
 
   private double tx, ty, ta, tID, heading, x, y, omega;
   private int periodicTimer = 1;
+
+  private final SlewRateLimiter transLimiter = new SlewRateLimiter(DriveConstants.maxAccelerationMetersPerSecondSquared);
+  private final SlewRateLimiter rotLimiter = new SlewRateLimiter(DriveConstants.maxRotationAccelerationRadiansPerSecondSquared);
     
   /** Creates a new DriveTrain. */
   public DriveTrain() {
@@ -256,7 +261,8 @@ public class DriveTrain extends SubsystemBase {
         builder.addDoubleProperty("Back Right Angle", () -> m_backRight.getDesiredState().angle.getRadians(), null);
         builder.addDoubleProperty("Back Right Velocity", () -> m_backRight.getDesiredState().speedMetersPerSecond, null);
 
-        builder.addDoubleProperty("Robot Angle", () -> getHeading().getRadians(), null);
+        builder.addDoubleProperty("Robot Angle", () -> isCollecting ? headingController.getSetpoint() 
+                                                                        : getHeading().getRadians(), null);
       }
     });
 
@@ -469,7 +475,6 @@ public class DriveTrain extends SubsystemBase {
     setModuleStates(swerveModuleStates);
 
     SmartDashboard.putString("DriveTrainMode", currentMode.toString());
-
   }
 
   /**
@@ -489,11 +494,15 @@ public class DriveTrain extends SubsystemBase {
 
     x = tempX * DriveConstants.maxSpeedMetersPerSecond * pickSpeedScaler();
     y = tempY * DriveConstants.maxSpeedMetersPerSecond * pickSpeedScaler();
-    omega = tempOmega * DriveConstants.maxRotationSpeedRadiansPerSecond * pickSpeedScaler();
-    // (isCollecting ?  
-    //             (y < 1e-6 && x < 1e-6 ? 0 : headingController.calculate(getHeading().getRadians(), Math.atan2(y, x))) : 
-    //               tempOmega * DriveConstants.maxRotationSpeedRadiansPerSecond)
-    //           * pickSpeedScaler();
+    omega = //(isCollecting ?  
+                // (Math.abs(y) < 1e-6 && Math.abs(x) < 1e-6 ? 0 : 
+                //       headingController.calculate(getHeading().getRadians(), Math.atan2(y, x))) : 
+                tempOmega * DriveConstants.maxRotationSpeedRadiansPerSecond//)
+          * pickSpeedScaler();
+
+    // x = transLimiter.calculate(x);
+    // y = transLimiter.calculate(y);
+    // omega = rotLimiter.calculate(omega);
   }
 
   /**

@@ -195,6 +195,8 @@ public class SwerveModule {
     m_driveConfig.Slot0.kI = ModuleConstants.driveKI;
     m_driveConfig.Slot0.kD = ModuleConstants.driveKD;
 
+    m_driveConfig.OpenLoopRamps.DutyCycleOpenLoopRampPeriod = ModuleConstants.driveRampRatePeriod;
+
     m_driveConfig.Voltage.PeakForwardVoltage = ModuleConstants.maxVoltage;
     m_driveConfig.Voltage.PeakReverseVoltage = -ModuleConstants.maxVoltage;
 

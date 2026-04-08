@@ -62,4 +62,8 @@ public class BlazeMath {
                + c * cos(theta) * (sqrt(pow(v * sin(theta), 2) - 29.4) + v * sin(theta))
                - c * v * theta * sin(theta) * (sqrt(pow(v * sin(theta), 2) - 29.4) + v * sin(theta));
     }
+
+    public static boolean withinRange(double input, double min, double max, boolean inclusive) {
+        return inclusive ? input <= max && input >= min : input < max && input > min;
+    }
 }

@@ -55,7 +55,7 @@ public class Collector extends SubsystemBase {
 
     setpoint = getCollectorPos();
 
-    m_deployMotor.setPosition(CollectorConstants.retractedPos);
+    m_deployMotor.setPosition(CollectorConstants.startingPos);
   }
 
   @Override
@@ -86,7 +86,7 @@ public class Collector extends SubsystemBase {
 
     m_currentState = new CollectorState(getCollectorPos(), m_collectorMotor.get());
     SmartDashboard.putString("CollectorMode", getCurrentMode().toString());
-
+    SmartDashboard.putNumber("Collector POs", getCollectorPos());
   }
 
   public void configMotorDefaults() {
@@ -98,6 +98,8 @@ public class Collector extends SubsystemBase {
 
     m_deployMotorConfig.ClosedLoopGeneral.ContinuousWrap = false;
     m_deployMotorConfig.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;
+
+    m_deployMotorConfig.MotorOutput.NeutralMode = CollectorConstants.deployMotorNeutralMode;
 
     m_deployMotorConfig.MotorOutput.PeakForwardDutyCycle = CollectorConstants.deployMotorMaxDutyCycle;
     m_deployMotorConfig.MotorOutput.PeakReverseDutyCycle = -CollectorConstants.deployMotorMaxDutyCycle;

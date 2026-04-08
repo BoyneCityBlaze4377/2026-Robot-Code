@@ -81,9 +81,9 @@ public final class Constants {
     public static final double collectionSpeedScaler = defaultSpeedScaler;
 
     public static final double maxSpeedMetersPerSecond = 5;
-    public static final double maxAccelerationMetersPerSecondSquared = 4;
+    public static final double maxAccelerationMetersPerSecondSquared = 3;
     public static final double maxRotationSpeedRadiansPerSecond = 3 * Math.PI;
-    public static final double maxRotationAccelerationRadiansPerSecondSquared = 2 * maxRotationSpeedRadiansPerSecond;
+    public static final double maxRotationAccelerationRadiansPerSecondSquared = 2 * Math.PI;
 
     public static final double translationalDeadband = .15;
     public static final double rotationalDeadband = .3;
@@ -156,6 +156,8 @@ public final class Constants {
     public static final double driveKD = 0.0;
     public static final double driveKTolerance = .5;
 
+    public static final double driveRampRatePeriod = .25;
+
     public static final NeutralModeValue initialDriveNeutralMode  = NeutralModeValue.Brake;
 
     /** Turning motor */
@@ -197,16 +199,16 @@ public final class Constants {
     public static final double shooterMaxVoltage = 16;
     public static final double shooterMaxDutyCycle = 1;
 
-    public static final double bigMoveAimingKP = 0.006; //.025
-    public static final double bigMoveAimingKI = 0.000008; //5e-7
-    public static final double bigMoveAimingKD = 0.000015; //1
+    public static final double bigMoveAimingKP = 0.0045; //.025
+    public static final double bigMoveAimingKI = 0.000007; //5e-7
+    public static final double bigMoveAimingKD = 0.000075; //1
 
-    public static final double fineTuneAimingKP = 0.025; //.1
-    public static final double finetuneAimingKI = 0.000001; //5e-7
-    public static final double fineTuneAimingKD = 0.000000001; //1
+    public static final double fineTuneAimingKP = 0.013;//.025; //.1
+    public static final double finetuneAimingKI = 0.00001;//.000001; //5e-7
+    public static final double fineTuneAimingKD = 0.001;//.000000001; //1
 
     public static final double aimingKTolerance = .5;
-    public static final double moveTypeThreshold = 10;
+    public static final double moveTypeThreshold = 8;
 
     public static final double maxTurretOutput = .75;
     //public static final Constraints aimingControllerConstraints = new Constraints(0, 0);
@@ -226,7 +228,7 @@ public final class Constants {
     public static final double maxHoodHeight = 64.2;
     public static final double minHoodHeight = 26.7;
 
-    public static final double turretAngleOffset = 125;
+    public static final double turretAngleOffset = 180;
 
     /* Aiming */
     public static final double turretGearRatio = 96 / 25;
@@ -247,8 +249,10 @@ public final class Constants {
 
     /* Speed and Control */
     public static final double collectionSpeed = -.25;
-    public static final double maxDeploySpeed = .5;
+    public static final double maxDeploySpeed = .35;
     public static final double resistanceSpeed = .1;
+
+    public static final NeutralModeValue deployNeutralMode = NeutralModeValue.Brake;
 
     public static final double restistanceSpeedthreshold = 0;
 
@@ -258,12 +262,13 @@ public final class Constants {
     public static final double deployMotorMaxDutyCycle = 1;
     public static final double deployMotorMaxVoltage = 12;
 
-    public static final double deployKP = 1.2;
+    public static final double deployKP = 5;
     public static final double deployKI = 0;
     public static final double deployKD = 0;
 
-    public static final double deployedPos = .37559;
-    public static final double retractedPos = 0;
+    public static final double deployedPos = .35;
+    public static final double startingPos = 0;
+    public static final double retractedPos = startingPos; // - .03;
     public static final double setpointOffset = .01;
 
     public static final double jostleInterval = .5;
@@ -365,11 +370,11 @@ public final class Constants {
     public static final String limeLightName = "limelight-bcblaze";
 
     private static final double LLforward = -Units.inchesToMeters(13.75);  // meters, forward from robot center
-    private static final double LLside = -Units.inchesToMeters(10 + 1/4);      // meters, left of robot center
-    private static final double LLup = Units.inchesToMeters(19 + 1/4);        // meters, up from robot center
-    private static final double LLroll = 0.0;                                 // degrees
-    private static final double LLpitch = 0.0;                                // degrees
-    private static final double LLyaw = 180;                                  // degrees
+    private static final double LLside = -Units.inchesToMeters(10 + 1/4);         // meters, left of robot center
+    private static final double LLup = Units.inchesToMeters(19 + 1/4);            // meters, up from robot center
+    private static final double LLroll = 0.0;                                     // degrees
+    private static final double LLpitch = 0.0;                                    // degrees
+    private static final double LLyaw = 180;                                      // degrees
 
     public static final double[] limelightRobotSpacePose = {LLforward, LLside, LLup, LLroll, LLpitch, LLyaw};
 
@@ -378,51 +383,22 @@ public final class Constants {
     public static final String sideCameraName = "sideCam";
 
     private static final double FCforward = Units.inchesToMeters(13.75);  // meters, forward from robot center
-    private static final double FCside = -Units.inchesToMeters(9.875);      // meters, left of robot center
-    private static final double FCup = Units.inchesToMeters(17.4375);        // meters, up from robot center
-    private static final double FCroll = 0.0;                                 // radians
-    private static final double FCpitch = 0;                                // radians
-    private static final double FCyaw = 0;                                  // radians
+    private static final double FCside = -Units.inchesToMeters(9.875);    // meters, left of robot center
+    private static final double FCup = Units.inchesToMeters(17.4375);     // meters, up from robot center
+    private static final double FCroll = 0.0;                                    // radians
+    private static final double FCpitch = -Units.degreesToRadians(1.5);  // radians
+    private static final double FCyaw = 0;                                       // radians
 
     private static final double SCforward = Units.inchesToMeters(1.375);  // meters, forward from robot center
-    private static final double SCside = Units.inchesToMeters(13.75);      // meters, left of robot center
-    private static final double SCup = Units.inchesToMeters(17.6875);        // meters, up from robot center
-    private static final double SCroll = 0.0;                                 // radians
-    private static final double SCpitch = 0.0;                                // radians
-    private static final double SCyaw = Math.PI/2;                                  // radians
+    private static final double SCside = Units.inchesToMeters(13.75);     // meters, left of robot center
+    private static final double SCup = Units.inchesToMeters(17.6875);     // meters, up from robot center
+    private static final double SCroll = 0.0;                                    // radians
+    private static final double SCpitch = 0.0;                                   // radians
+    private static final double SCyaw = Math.PI/2;                               // radians
 
     public static final Transform3d frontCamRobotToCam = new Transform3d(new Translation3d(FCforward, FCside, FCup), 
                                                                          new Rotation3d(FCroll, FCpitch, FCyaw));
     public static final Transform3d sideCamRobotToCam = new Transform3d(new Translation3d(SCforward, SCside, SCup), 
                                                                          new Rotation3d(SCroll, SCpitch, SCyaw));
-    
-  }
-
-  public static final class TurretShotConstants {
-    public static final double minDistance = 0;
-    public static final double maxDistance = 0;
-    public static final double maxAngle = 90 - ShooterConstants.maxHoodHeight;
-    public static final double minAngle = 90 - ShooterConstants.minHoodHeight;
-    public static final double maxVelocity = 0;
-    public static final double minVelocity = 0;
-
-    public static final double accuracyDecimalPlaces = 1;
-
-    // public static List<TurretShotList> shotLists = new ArrayList<TurretShotList>((int) ((maxAngle - minAngle) / 
-    //                                                                        Math.pow(10, -accuracyDecimalPlaces)));
-    
-
-    // {
-    //   for (double i = minDistance; i <= maxDistance; i += Math.pow(10, -accuracyDecimalPlaces)) {
-    //     shotLists.add((int) ((i - minDistance) / Math.pow(10, -accuracyDecimalPlaces)), new TurretShotList(i));
-    //   }
-
-    //   for (double theta = minAngle; theta <= maxAngle; theta += Math.pow(10, -accuracyDecimalPlaces)) {
-    //     for (double v = minVelocity; v <= maxVelocity; v += Math.pow(10, -accuracyDecimalPlaces)) {
-    //       double d = BlazeMath.roundToDecimalPlaces(BlazeMath.shotDistance(theta, v), accuracyDecimalPlaces);
-    //       shotLists.get((int) ((d - minDistance) / Math.pow(10, -accuracyDecimalPlaces))).list.add(new TurretShot(d, theta, v));
-    //     }
-    //   }
-    // }
   }
 }
