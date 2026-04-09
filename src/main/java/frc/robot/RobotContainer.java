@@ -140,7 +140,7 @@ public class RobotContainer {
   public Command getAutonomousCommand() {
     // An example command will be run in autonomous
     // return new PathPlannerAuto("HopClimb");
-    return new PathPlannerAuto("Line");
-    // return null;
+    // return new PathPlannerAuto("Line");
+    return null;
   }
 }

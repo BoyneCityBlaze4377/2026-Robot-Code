@@ -96,7 +96,7 @@ public class DriveTrain extends SubsystemBase {
   private final AprilTagFieldLayout tagLayout = AprilTagFieldLayout.loadField(AprilTagFields.k2026RebuiltWelded);
 
   private final PhotonCamera m_frontCam = new PhotonCamera(SensorConstants.frontCameraName);
-  private final PhotonCamera m_sideCam = new PhotonCamera(SensorConstants.frontCameraName);
+  private final PhotonCamera m_sideCam = new PhotonCamera(SensorConstants.sideCameraName);
 
   private final PhotonPoseEstimator m_frontEstimator = new PhotonPoseEstimator(tagLayout, SensorConstants.frontCamRobotToCam);
   private final PhotonPoseEstimator m_sideEstimator = new PhotonPoseEstimator(tagLayout, SensorConstants.sideCamRobotToCam);
@@ -162,21 +162,6 @@ public class DriveTrain extends SubsystemBase {
 
     // DriveTrain GyroScope
     m_gyro = new AHRS(NavXComType.kUSB1);
-    m_gyro.reset();
-    m_gyro.reset();
-    m_gyro.reset();
-    m_gyro.reset();
-    m_gyro.reset();
-    m_gyro.reset();
-    m_gyro.reset();
-    m_gyro.reset();
-    m_gyro.reset();
-    m_gyro.reset();
-    m_gyro.reset();
-    m_gyro.reset();
-    m_gyro.reset();
-    m_gyro.reset();
-    m_gyro.zeroYaw();
     // m_gyro.setAngleAdjustment(initialPose.getRotation().getDegrees());
     //heading = initialPose.getHeadingDegrees();
 
@@ -188,7 +173,7 @@ public class DriveTrain extends SubsystemBase {
                                                  initialPose,
                                                  AutoAimConstants.poseEstimateOdometryStdDev,
                                                  AutoAimConstants.poseEstimateVisionStdDev);
-    setInitialPose(initialPose);
+    setInitialPose(new Pose2d(3.65, 4.035, new Rotation2d(0)));//initialPose
     lastPose = initialPose;
     estimateField.setRobotPose(initialPose);
 
@@ -406,9 +391,8 @@ public class DriveTrain extends SubsystemBase {
     // Update random stuff
     isBrake = m_frontLeft.getNeutralMode() == NeutralModeValue.Brake;
 
-    if (frontCamEstPos.isPresent()) estimateField.getObject("PHEST").setPose(sideCamEstPos.get().estimatedPose.toPose2d());
+    if (frontCamEstPos.isPresent()) estimateField.getObject("PHEST").setPose(frontCamEstPos.get().estimatedPose.toPose2d());
     if (sideCamEstPos.isPresent()) estimateField.getObject("SCEST").setPose(sideCamEstPos.get().estimatedPose.toPose2d());
-
 
     // Drive Robot
     rawDrive(x , y, omega);

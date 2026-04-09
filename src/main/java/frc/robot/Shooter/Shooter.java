@@ -202,7 +202,7 @@ public class Shooter extends SubsystemBase {
         break;
     }
 
-    // aimTurret(m_desiredState.angleToTarget);
+    aimTurret(m_desiredState.angleToTarget);
     // angleHood(m_desiredState.shotPitch);
     revFlywheel(m_desiredState.shotVelocity);
     runIndexers(m_desiredState.isShooting);
@@ -227,6 +227,8 @@ public class Shooter extends SubsystemBase {
     SmartDashboard.putData("shoot field",simField);
 
     SmartDashboard.putNumber("Turret Pos", getTurretPos());
+    SmartDashboard.putNumber("Turret RPM", getVelocity());
+
   }
 
   public void configMotorDefaults() {
@@ -359,7 +361,7 @@ public class Shooter extends SubsystemBase {
   }
 
   public double getVelocity() {
-    return ShooterMath.getVelocityFromMotorOutput(m_flyWheelMotor1.get());
+    return m_flywheelEncoder.getVelocity(); //ShooterMath.getVelocityFromMotorOutput(m_flyWheelMotor1.get());
     //Units.rotationsPerMinuteToRadiansPerSecond(m_flywheelEncoder.getVelocity()) * Units.inchesToMeters(2);
   }
 
